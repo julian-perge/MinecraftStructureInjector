@@ -23,6 +23,8 @@ public final class LabBridge {
         public final String revision=UUID.randomUUID().toString();
         public volatile String state="validating",error="";
         public volatile int captured=0;
+        public volatile int processed=0,workTotal=0;
+        public Boolean pauseBefore;
         public String sha256;
         public final Path directory;
         public final net.minecraft.server.MinecraftServer world=LabSession.server;
@@ -33,6 +35,7 @@ public final class LabBridge {
         public JsonObject json() {
             JsonObject j=new JsonObject();j.addProperty("revision",revision);j.addProperty("state",state);j.addProperty("error",error);
             j.addProperty("captured",captured);j.addProperty("total",views.size());j.addProperty("sha256",sha256);
+            j.addProperty("processed",processed);j.addProperty("work_total",workTotal);
             j.add("views",views);j.add("captures",GSON.toJsonTree(captures));j.addProperty("directory",directory.toString());
             return j;
         }
@@ -89,6 +92,19 @@ public final class LabBridge {
                 job=next;
                 IO.execute(()->runSubmission(next,request));return next.json();
             }
+            case "recapture": {
+                Job previous=job;
+                if(previous==null||!previous.state.equals("complete"))throw new IllegalStateException("Complete a revision before recapturing");
+                if(!previous.revision.equals(request.get("revision").getAsString()))throw new IllegalArgumentException("Stale revision");
+                onServer(previous,()->{LabSession.requireLab();return true;});
+                if(!busy.compareAndSet(false,true))throw new IllegalStateException("A job is active");
+                try{
+                    Job next=new Job();next.sha256=previous.sha256;
+                    next.views=request.has("views")?expandViews(request.getAsJsonArray("views"),new CompoundTag()):previous.views.deepCopy();
+                    Files.copy(previous.directory.resolve("structure.nbt"),next.directory.resolve("structure.nbt"));
+                    next.state="capturing";job=next;persist(next);Minecraft.getInstance().execute(()->LabCapture.begin(next));return next.json();
+                }catch(Exception e){busy.set(false);throw e;}
+            }
             default:throw new IllegalArgumentException("Unknown operation: "+op);
         }
     }
@@ -107,7 +123,10 @@ public final class LabBridge {
             onServer(next,()->LabSession.validate(clean)); // includes replacement block validation
             if(next.cancelled)throw new CancellationException();
             next.state="placing";persist(next);
-            onServer(next,()->{LabSession.place(tag);return true;});
+            CompletableFuture<Void> clientReady=new CompletableFuture<>();
+            Minecraft.getInstance().execute(()->{next.pauseBefore=Minecraft.getInstance().options.pauseOnLostFocus;Minecraft.getInstance().options.pauseOnLostFocus=false;Minecraft.getInstance().gui.setScreen(null);clientReady.complete(null);});
+            clientReady.get(30,TimeUnit.SECONDS);
+            onServer(next,()->LabPlacement.begin(tag,next)).get(300,TimeUnit.SECONDS);
             if(next.cancelled)throw new CancellationException();
             next.state="capturing";persist(next);
             Minecraft.getInstance().execute(()->LabCapture.begin(next));
@@ -132,6 +151,10 @@ public final class LabBridge {
                 if(angle.has("fov"))v.add("fov",angle.get("fov"));
                 if(!v.has("fov"))v.addProperty("fov",70);
                 if(!v.has("eye_height"))v.addProperty("eye_height",1.62);
+                if(v.has("render_distance")){
+                    double distance=v.get("render_distance").getAsDouble();
+                    if(!Double.isFinite(distance)||distance!=Math.rint(distance)||distance<4||distance>24)throw new IllegalArgumentException("Render distance must be an integer between 4 and 24 chunks");
+                }
                 double eye=v.get("eye_height").getAsDouble();
                 if(!Double.isFinite(eye)||eye<0||eye>4)throw new IllegalArgumentException("Eye height must be between 0 and 4");
                 JsonArray p=v.getAsJsonArray("position");if(p==null||p.size()!=3)throw new IllegalArgumentException("View needs a 3D position");
@@ -151,7 +174,9 @@ public final class LabBridge {
     }
     public static void fail(Job j,Throwable e){
         j.state=j.cancelled?"cancelled":"failed";j.error=message(e);
+        j.cancelled=true; // Stop queued chunk work after an I/O or placement timeout.
         try{persist(j);}catch(Exception ignored){}busy.set(false);
+        if(j.pauseBefore!=null)Minecraft.getInstance().execute(()->Minecraft.getInstance().options.pauseOnLostFocus=j.pauseBefore);
     }
     public static void complete(Job j){
         IO.execute(()->{

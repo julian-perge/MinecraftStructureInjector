@@ -6,16 +6,10 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.*;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gamerules.GameRules;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.storage.LevelResource;
-import net.minecraft.world.phys.AABB;
 import java.nio.file.*;
 import java.util.*;
 
@@ -24,9 +18,10 @@ public final class LabSession {
     public static volatile MinecraftServer server;
     private static final Identifier LAB = Identifier.fromNamespaceAndPath("structurelab", "lab");
     public static final BlockPos ORIGIN = new BlockPos(0, -60, 0);
-    public static final long MAX_VOLUME = 2_000_000L; // milestone budget, reported to agents
-    private static int[] previousSize;
-    private static Path ledger;
+    public static final long MAX_VOLUME = 16_000_000L;
+    public static final int MAX_BLOCKS = 1_000_000;
+    static int[] previousSize;
+    static Path ledger;
     public static void open(MinecraftServer value) {
         server = value;
         previousSize = null;
@@ -45,7 +40,7 @@ public final class LabSession {
         value.getCommands().performPrefixedCommand(value.createCommandSourceStack(), "weather clear");
         value.tickRateManager().setFrozen(true);
     }
-    public static void close(MinecraftServer value) { if (server == value) { server = null; previousSize = null; } }
+    public static void close(MinecraftServer value) { LabPlacement.closed(value); if (server == value) { server = null; previousSize = null; } }
     public static boolean isLab() {
         return server != null && server.overworld().dimensionTypeRegistration().unwrapKey().map(k -> k.identifier().equals(LAB)).orElse(false);
     }
@@ -58,6 +53,7 @@ public final class LabSession {
         out.addProperty("minecraft", "26.2"); out.addProperty("max_width", 1024); out.addProperty("max_length", 1024);
         out.addProperty("max_angles", 1024); out.addProperty("max_volume", MAX_VOLUME);
         out.addProperty("max_clear_volume", MAX_VOLUME * 2);
+        out.addProperty("max_blocks", MAX_BLOCKS); out.addProperty("placement", "chunk_batched");
         out.addProperty("max_height", server == null ? 380 : Math.min(1024, server.overworld().getMaxY() - ORIGIN.getY() + 1));
         out.add("origin", LabBridge.GSON.toJsonTree(new int[]{0, -60, 0}));
         return out;
@@ -72,7 +68,7 @@ public final class LabSession {
         return out;
     }
     public static CompoundTag validate(Path input) throws Exception {
-        CompoundTag tag = NbtIo.readCompressed(input, NbtAccounter.create(128L * 1024 * 1024));
+        CompoundTag tag = NbtIo.readCompressed(input, NbtAccounter.create(256L * 1024 * 1024));
         ListTag size = tag.getList("size").orElseThrow(() -> new IllegalArgumentException("Missing size"));
         if (size.size()!=3) throw new IllegalArgumentException("size must contain three integers");
         int x=size.getIntOr(0,0), y=size.getIntOr(1,0), z=size.getIntOr(2,0);
@@ -94,6 +90,7 @@ public final class LabSession {
             }
         }
         Set<Long> positions=new HashSet<>();
+        if(tag.getListOrEmpty("blocks").size()>MAX_BLOCKS)throw new IllegalArgumentException("At most "+MAX_BLOCKS+" explicit block records");
         for (Tag entry:tag.getList("blocks").orElseThrow()) {
             CompoundTag b=(CompoundTag)entry;
             int state=b.getIntOr("state",-1);
@@ -137,24 +134,6 @@ public final class LabSession {
         }
         tag.put("palette",compact);
         return result;
-    }
-    public static void place(CompoundTag tag) throws Exception {
-        requireLab();
-        ServerLevel level=server.overworld();
-        ListTag s=tag.getListOrEmpty("size"); int[] size={s.getIntOr(0,0),s.getIntOr(1,0),s.getIntOr(2,0)};
-        int[] clear=size.clone();
-        if(previousSize!=null) for(int i=0;i<3;i++) clear[i]=Math.max(clear[i],previousSize[i]);
-        if((long)clear[0]*clear[1]*clear[2]>MAX_VOLUME*2) throw new IllegalArgumentException("Combined old/new bounding box exceeds milestone cleanup budget; use a fresh lab world for this shape");
-        // Persist the union BEFORE mutation so an interrupted placement can be cleared next time.
-        Files.writeString(ledger,LabBridge.GSON.toJson(clear));
-        previousSize=clear;
-        level.getEntitiesOfClass(net.minecraft.world.entity.Entity.class,new AABB(0,-60,0,clear[0],-60+clear[1],clear[2]),e->!(e instanceof net.minecraft.world.entity.player.Player)).forEach(net.minecraft.world.entity.Entity::discard);
-        int flags=Block.UPDATE_CLIENTS|Block.UPDATE_SKIP_ALL_SIDEEFFECTS;
-        for(BlockPos p:BlockPos.betweenClosed(ORIGIN,ORIGIN.offset(clear[0]-1,clear[1]-1,clear[2]-1))) level.setBlock(p,Blocks.AIR.defaultBlockState(),flags);
-        StructureTemplate template=new StructureTemplate();
-        template.load(BuiltInRegistries.BLOCK,tag);
-        if(!template.placeInWorld(level,ORIGIN,ORIGIN,new StructurePlaceSettings().setKnownShape(true).setIgnoreEntities(true),net.minecraft.util.RandomSource.create(0),flags)) throw new IllegalStateException("Template placement failed");
-        previousSize=size; Files.writeString(ledger,LabBridge.GSON.toJson(size));
     }
     public static void move(JsonObject view) {
         requireLab();

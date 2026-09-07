@@ -16,7 +16,7 @@ import java.util.concurrent.*;
 @EventBusSubscriber(modid="structurelab",value=Dist.CLIENT)
 public final class LabCapture {
     private static LabBridge.Job active;
-    private static int index,stableFrames,oldFov,oldWidth,oldHeight;
+    private static int index,stableFrames,oldFov,oldWidth,oldHeight,oldDistance;
     private static boolean oldPause,oldHidden,oldBob,writing;
     private static CameraType oldCamera;
     private static long movedAt;
@@ -27,7 +27,10 @@ public final class LabCapture {
         if(mc.player==null||mc.level==null||job.world!=LabSession.server){LabBridge.fail(job,new IllegalStateException("Client lab world not ready"));return;}
         try{
             active=job;index=0;writing=false;
-            oldPause=mc.options.pauseOnLostFocus;oldHidden=mc.gui.hud.isHidden();oldBob=mc.options.bobView().get();oldFov=mc.options.fov().get();oldCamera=mc.options.getCameraType();
+            oldPause=job.pauseBefore==null?mc.options.pauseOnLostFocus:job.pauseBefore;oldHidden=mc.gui.hud.isHidden();oldBob=mc.options.bobView().get();oldFov=mc.options.fov().get();oldCamera=mc.options.getCameraType();
+            oldDistance=mc.options.renderDistance().get();int distance=oldDistance;
+            for(JsonElement e:job.views)if(e.getAsJsonObject().has("render_distance"))distance=Math.max(distance,e.getAsJsonObject().get("render_distance").getAsInt());
+            mc.options.renderDistance().set(distance);
             oldWidth=mc.getWindow().getWidth();oldHeight=mc.getWindow().getHeight();
             mc.options.pauseOnLostFocus=false;mc.options.bobView().set(false);mc.options.setCameraType(CameraType.FIRST_PERSON);
             if(!mc.gui.hud.isHidden())mc.gui.hud.toggle();
@@ -91,7 +94,7 @@ public final class LabCapture {
         }catch(Exception e){abort(e);}
     }
     private static void restore(){
-        Minecraft mc=Minecraft.getInstance();mc.options.pauseOnLostFocus=oldPause;mc.options.bobView().set(oldBob);mc.options.fov().set(oldFov);mc.options.setCameraType(oldCamera);
+        Minecraft mc=Minecraft.getInstance();mc.options.pauseOnLostFocus=oldPause;mc.options.bobView().set(oldBob);mc.options.fov().set(oldFov);mc.options.setCameraType(oldCamera);mc.options.renderDistance().set(oldDistance);
         if(mc.gui.hud.isHidden()!=oldHidden)mc.gui.hud.toggle();
         if(!mc.getWindow().isFullscreen())mc.getWindow().setWindowed(oldWidth,oldHeight);
     }

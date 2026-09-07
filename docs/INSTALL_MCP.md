@@ -10,13 +10,13 @@ Find the instance's `structurelab/connection.json`. Minecraft and the MCP proces
 
 ## 2. Install the release wheel
 
-Download **`structurelab_mcp-0.1.0-py3-none-any.whl`** from the [v0.1.0 release](https://github.com/ewitulsk/MinecraftStructureInjector/releases/tag/v0.1.0). The package is distributed as a release asset; these instructions do not assume it is published to PyPI.
+Download **`structurelab_mcp-0.2.0-py3-none-any.whl`** from the [v0.2.0 release](https://github.com/ewitulsk/MinecraftStructureInjector/releases/tag/v0.2.0). The package is distributed as a release asset; these instructions do not assume it is published to PyPI.
 
 In PowerShell, change the wheel path if your downloads directory differs:
 
 ```powershell
 py -3.13 -m venv "$HOME\structurelab-mcp\.venv"
-& "$HOME\structurelab-mcp\.venv\Scripts\python.exe" -m pip install "$HOME\Downloads\structurelab_mcp-0.1.0-py3-none-any.whl"
+& "$HOME\structurelab-mcp\.venv\Scripts\python.exe" -m pip install "$HOME\Downloads\structurelab_mcp-0.2.0-py3-none-any.whl"
 & "$HOME\structurelab-mcp\.venv\Scripts\python.exe" -m structurelab.server --help
 ```
 

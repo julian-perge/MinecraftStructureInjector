@@ -2,6 +2,8 @@
 from __future__ import annotations
 import json
 import math
+import gzip
+import struct
 from pathlib import Path
 from typing import Any
 import nbtlib as nbt
@@ -64,8 +66,10 @@ class Structure:
     def save(self, path: str | Path) -> dict[str, str]:
         path = Path(path).resolve()
         path.parent.mkdir(parents=True, exist_ok=True)
-        palette, indices, blocks = [], {}, []
-        for pos, (name, props, entity) in sorted(self.blocks.items()):
+        if len(self.blocks)>1_000_000:
+            raise ValueError("At most 1,000,000 explicit blocks")
+        palette, indices = [], {}
+        for name, props, entity in self.blocks.values():
             key = (name, tuple(sorted(props.items())))
             if key not in indices:
                 indices[key] = len(palette)
@@ -73,14 +77,26 @@ class Structure:
                 if props:
                     state["Properties"] = nbt.Compound({k: nbt.String(v) for k, v in props.items()})
                 palette.append(state)
-            block = nbt.Compound({"pos": nbt.List[nbt.Int](pos), "state": nbt.Int(indices[key])})
-            if entity is not None:
-                block["nbt"] = entity
-            blocks.append(block)
-        root = nbt.File({"DataVersion": nbt.Int(DATA_VERSION), "size": nbt.List[nbt.Int](self.size),
-                         "palette": nbt.List[nbt.Compound](palette), "blocks": nbt.List[nbt.Compound](blocks),
-                         "entities": nbt.List[nbt.Compound]()})
-        root.save(path, gzipped=True)
+        # Stream NBT records rather than allocating a second giant Python NBT object tree.
+        def header(kind, name):
+            name=name.encode("utf-8")
+            return bytes([kind])+struct.pack(">H",len(name))+name
+        temporary=path.with_suffix(path.suffix+".tmp")
+        with temporary.open("wb") as raw, gzip.GzipFile(filename="",mode="wb",fileobj=raw,mtime=0) as out:
+            out.write(header(10,""))
+            out.write(header(3,"DataVersion")+struct.pack(">i",DATA_VERSION))
+            out.write(header(9,"size")+b"\x03"+struct.pack(">iiii",3,*self.size))
+            out.write(header(9,"palette")+b"\x0a"+struct.pack(">i",len(palette)))
+            for state in palette: state.write(out)
+            out.write(header(9,"blocks")+b"\x0a"+struct.pack(">i",len(self.blocks)))
+            for pos,(name,props,entity) in sorted(self.blocks.items()):
+                out.write(header(9,"pos")+b"\x03"+struct.pack(">iiii",3,*pos))
+                out.write(header(3,"state")+struct.pack(">i",indices[(name,tuple(sorted(props.items())))]))
+                if entity is not None:
+                    out.write(header(10,"nbt"));entity.write(out)
+                out.write(b"\x00")
+            out.write(header(9,"entities")+b"\x0a"+struct.pack(">i",0)+b"\x00")
+        temporary.replace(path)
         views = path.with_suffix(".views.json")
         views.write_text(json.dumps(self.views, indent=2), encoding="utf-8")
         return {"path": str(path), "views_path": str(views)}

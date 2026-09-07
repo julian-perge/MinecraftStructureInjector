@@ -1,8 +1,8 @@
-# Minecraft Structure Lab — milestone 1
+# Minecraft Structure Lab
 
 A NeoForge 26.2 mod and local MCP server for generating NBT structures, placing each revision into a dedicated superflat world, and returning labeled screenshots rendered by Minecraft.
 
-This milestone implements the furnished-house loop: generate → validate → replace → capture → revise → export. It uses one real client camera sequentially. No extra renderer, RCON server, or manual camera cycling is needed.
+Version 0.2.0 extends the generate → validate → replace → capture → revise → export loop to large builds. The Nebraska State Capitol example occupies 185 × 130 × 185 blocks and was refined through three real Minecraft capture reviews. It uses one real client camera sequentially. No extra renderer, RCON server, or manual camera cycling is needed.
 
 ## Install
 
@@ -13,7 +13,9 @@ Download the JAR and MCP wheel from the [latest release](https://github.com/ewit
 
 The tested setup is Windows, Minecraft Java **26.2**, and NeoForge **26.2.0.79**. This release requires NeoForge **26.2.0.77 or newer within Minecraft 26.2**, Java 25 for Minecraft, and Python 3.11+ for MCP. Minecraft and MCP run on the same machine. The JAR alone does not install the MCP server.
 
-![A bedroom captured automatically in Minecraft](docs/images/bedroom.png)
+![Nebraska State Capitol captured automatically in Minecraft](docs/images/capitol-aerial.jpg)
+
+[Get the Capitol model, references, placement instructions, and review history](docs/NEBRASKA_CAPITOL.md).
 
 The mod exposes a local HTTP bridge; the external Python process exposes MCP over stdio. Codex or another MCP client starts that process automatically. The bridge creates an ephemeral localhost port and bearer token in `<instance>/structurelab/connection.json`. Keep the connection file private.
 
@@ -27,6 +29,7 @@ The mod exposes a local HTTP bridge; the external Python process exposes MCP ove
 | `generate_example_house` | Generate the furnished example, revision 1 or 2. |
 | `validate_structure` | Validate NBT coordinates, palette, registry IDs, properties, and limits. |
 | `submit_structure` | Import a file with optional views JSON; replace and capture automatically. |
+| `recapture_views` | Capture the current completed structure again, optionally with revised cameras, without clearing or placing blocks. |
 | `job_status` / `cancel_job` | Poll or cancel a specific revision. |
 | `list_captures` / `get_capture` | List labels and return individual MCP image content. |
 | `inspect_blocks` | Read authoritative placed block states. |
@@ -82,7 +85,7 @@ Views may be a sidecar JSON list, or embedded `structurelab:view_pad` blocks. `S
 ]
 ```
 
-Minecraft yaw 0 faces +Z, yaw -90 faces +X; positive pitch looks down. FOV defaults to 70 and must be 30–110. Eye height defaults to 1.62 and must be 0–4. IDs must use letters, digits, underscores or hyphens, at most 64 characters. Angle IDs are unique within their view.
+Minecraft yaw 0 faces +Z, yaw -90 faces +X; positive pitch looks down. FOV defaults to 70 and must be 30–110. Eye height defaults to 1.62 and must be 0–4. Optional `render_distance` is an integer from 4 to 24 chunks on a view; a batch temporarily raises the client distance to the largest requested value and restores the previous setting afterward. IDs must use letters, digits, underscores or hyphens, at most 64 characters. Angle IDs are unique within their view.
 
 For direct NBT authoring, a pad stores the JSON object as the string `nbt.view.json`. If the JSON omits `position`, the camera uses the block center in X/Z and its Y coordinate as feet height. Optional `nbt.view.replacement` is a vanilla palette-style compound with `Name` and optional `Properties`. The default replacement is air. Pad metadata is extracted before placement; pad block entities and unused pad palette entries are stripped from the export. A pad replacement does not preserve a separate block entity.
 
@@ -92,7 +95,8 @@ Mark one view `spawn: true`. Its first angle is captured first and the player re
 
 - One structure at fixed origin `(0, -60, 0)` above the flat grass layer.
 - Each submission is copied into an immutable revision directory before reading. No partial-file watcher races.
-- The old/new bounding box is cleared, including leftover non-player entities. The template is placed with block entities, while incidental placement side effects are suppressed.
+- The old/new bounding box is cleared one chunk column per server tick, skipping empty sections. Non-player entities in that box are removed. The template is placed one chunk at a time with native block-entity loading and suppressed incidental placement side effects. Jobs report `clearing` / `placing`, `processed`, and `work_total`.
+- Placement temporarily disables pause-on-focus-loss before beginning the chunk batches; capture restores the earlier setting.
 - The lab freezes simulation and fixes daylight/weather. This is visual inspection; redstone and mob simulation validation are deferred.
 - Before each screenshot, the mod waits for the player/camera position and angles, nearby chunks, lighting work, and section rendering to settle. A view has a 60-second readiness timeout.
 - Captures use Minecraft's actual framebuffer at **1920×1080 PNG**, with HUD and view bobbing hidden. A windowed client is resized during the batch and restored afterward. Fullscreen must already be 1920×1080 or the batch reports an error.
@@ -104,13 +108,13 @@ Instance data lives under `structurelab/revisions/<UUID>/`; `structurelab/latest
 
 ## Current limits
 
-This is the first milestone, not the completed large-build implementation.
+Limits are explicit resource budgets, not claims that every maximum-size combination has been qualified.
 
 - Width and length: at most 1024 each. Height: at most the world permits; the default lab origin permits **380** blocks through Y=319.
-- Bounding volume: **2,000,000 positions**, even for sparse NBT. Combined old/new cleanup bounding volume: **4,000,000 positions**. Very different shapes may require a fresh lab world.
-- Up to 1024 angle definitions are accepted, but only the five-angle furnished-house workflow has been exercised. Large capture batches and large placements have not been performance-qualified.
+- Bounding volume: **16,000,000 positions**, even for sparse NBT. Combined old/new cleanup bounding volume: **32,000,000 positions**. At most **1,000,000 explicit block records**, 64 MiB compressed input, and a 256 MiB NBT accounting budget. Very different shapes may require a fresh lab world.
+- Up to 1024 angle definitions are accepted. Tested examples include the five-angle house and the 429,341-record Capitol with 16 angles at 1920×1080. The full 1024-angle limit and maximum volume have not been performance-qualified.
 - One palette; entity templates and multi-palette structures are rejected. Block entities are supported, but arbitrary mod-specific block-entity behavior is not comprehensively validated.
-- No asynchronous chunk-batched placement, disk quota, automatic failed-job pruning, ad hoc recapture, dedicated-server/RCON workflow, or shader compatibility guarantee yet.
+- No disk quota, automatic failed-job pruning, dedicated-server/RCON workflow, or shader compatibility guarantee yet.
 - Export removes Structure Lab pads. Builds using other mods retain those dependencies; `export_structure` reports their namespaces. The example exports with no non-vanilla dependencies.
 
 ## Vanilla datapack export
@@ -141,11 +145,13 @@ py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-In a stopped Modrinth NeoForge 26.2 instance, select **Content → Upload files** and choose `build/libs/structurelab-26.2-0.1.0.jar` (not the sources JAR), then launch it and create a Structure Lab world.
+In a stopped Modrinth NeoForge 26.2 instance, select **Content → Upload files** and choose `build/libs/structurelab-26.2-0.2.0.jar` (not the sources JAR), then launch it and create a Structure Lab world.
 
 See [MCP installation](docs/INSTALL_MCP.md) for release-wheel installation, source installation, and client registration. Set `STRUCTURELAB_CONNECTION` to the absolute connection-file path when running the integration scripts against an instance other than the default Modrinth `NeoForge 26.2` profile.
 
 ## Verification
+
+The [Capitol case study](docs/NEBRASKA_CAPITOL.md) documents three large-build iterations. Generate it with `python examples/nebraska_capitol.py --revision 3 --output artifacts/capitol/iteration-3/capitol.nbt`, then run `python scripts/capture_capitol.py artifacts/capitol/iteration-3` with the lab open. Add `--recapture` to exercise camera-only recapture of the current build. These commands replace the active lab structure or its capture set.
 
 With the lab world open, these scripts use real MCP initialization and stdio tool calls:
 

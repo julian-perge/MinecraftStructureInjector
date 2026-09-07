@@ -31,6 +31,7 @@ public final class StructureLab {
         BLOCKS.register(bus); ITEMS.register(bus); ENTITIES.register(bus);
         NeoForge.EVENT_BUS.addListener((ServerStartedEvent e) -> LabSession.open(e.getServer()));
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> LabSession.close(e.getServer()));
+        NeoForge.EVENT_BUS.addListener(LabPlacement::tick);
     }
     public static final class ViewPad extends BaseEntityBlock {
         public static final MapCodec<ViewPad> CODEC = simpleCodec(ViewPad::new);

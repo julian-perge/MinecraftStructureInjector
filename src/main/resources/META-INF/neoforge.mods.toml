@@ -3,7 +3,7 @@ loaderVersion="[1,)"
 license="MIT"
 [[mods]]
 modId="structurelab"
-version="0.1.0"
+version="0.2.0"
 displayName="Structure Lab"
 description='''Generate, inspect, and export structures through a local MCP connection.'''
 [[dependencies.structurelab]]

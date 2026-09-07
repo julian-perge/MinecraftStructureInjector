@@ -5,7 +5,7 @@
 - Minecraft **Java Edition 26.2**.
 - NeoForge **26.2.0.77 or newer for Minecraft 26.2**. Tested with **26.2.0.79**.
 - Java **25** for the game. Modrinth can manage the game runtime.
-- A local graphical Minecraft client. Milestone 1 targets singleplayer and was tested on Windows.
+- A local graphical Minecraft client. This release targets singleplayer and was tested on Windows.
 
 Fabric, Forge, Bedrock Edition, and a headless dedicated server are not supported by this release. No other content mods are required.
 
@@ -13,7 +13,7 @@ Fabric, Forge, Bedrock Edition, and a headless dedicated server are not supporte
 
 1. Open Modrinth. Use an existing **NeoForge 26.2** instance, or select **Create instance → Custom setup → NeoForge → Game version 26.2**.
 2. Stop that instance before installing or updating the mod.
-3. Download **`structurelab-26.2-0.1.0.jar`** from the [v0.1.0 release](https://github.com/ewitulsk/MinecraftStructureInjector/releases/tag/v0.1.0).
+3. Download **`structurelab-26.2-0.2.0.jar`** from the [v0.2.0 release](https://github.com/ewitulsk/MinecraftStructureInjector/releases/tag/v0.2.0).
 4. Open the instance and select **Content → Upload files**. Choose the downloaded JAR. Alternatively, copy it into the instance's `mods` directory.
 5. Confirm Structure Lab is enabled and launch the instance. When updating, remove any older Structure Lab JAR with a different filename so only one version is installed.
 
@@ -56,9 +56,9 @@ Use the actual instance folder, which may differ from its display name. Do not u
 
 ## Current limits
 
-This release handles one structure at a time, with at most **2,000,000 positions** in its bounding volume. Width and length may each be up to 1024; height at the default origin may be up to 380. The combined old/new cleanup box is limited to 4,000,000 positions.
+This release handles one structure at a time, with at most **16,000,000 positions** in its bounding volume. Width and length may each be up to 1024; height at the default origin may be up to 380. The combined old/new cleanup box is limited to 32,000,000 positions.
 
-The schema accepts up to 1024 angles, but the tested integration batch contains five. Large-scale performance, entity templates, multi-palette structures, redstone simulation, and shader compatibility are not part of this milestone.
+At most 1,000,000 explicit block records are accepted. The schema permits 1024 angles; the largest tested batch has 16 angles for the 429,341-record Capitol. The full limits, entity templates, multi-palette structures, redstone simulation, and shader compatibility are not qualified by this release.
 
 ## Troubleshooting
 

@@ -2,7 +2,7 @@ plugins {
     id 'java-library'
     id 'net.neoforged.moddev' version '2.0.146'
 }
-version = '0.1.0'
+version = '0.2.0'
 group = 'dev.structurelab'
 base { archivesName = 'structurelab-26.2' }
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)

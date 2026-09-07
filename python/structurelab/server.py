@@ -83,6 +83,20 @@ def job_status(revision: str) -> dict:
 
 
 @mcp.tool()
+def recapture_views(revision: str, views_path: str | None = None) -> dict:
+    """Capture the placed build without replacing blocks. Returns a new revision and capture set.
+
+    Optional sidecar defines the replacement set of viewpoints; omitted reuses all current views.
+    After success, old screenshots are deleted using the normal retention policy.
+    """
+    require_revision(revision)
+    args = {"revision": revision}
+    if views_path:
+        args["views"] = json.loads(Path(views_path).read_text(encoding="utf-8"))
+    return rpc("recapture", **args)
+
+
+@mcp.tool()
 def cancel_job(revision: str) -> dict:
     """Request cancellation of the current revision."""
     require_revision(revision)
@@ -125,8 +139,8 @@ def generate_structure(output_path: str, size: list[int], operations: list[dict]
     room: {op:'room',start:[x,y,z],end:[x,y,z],wall:'oak_planks',floor:'stone',roof:'oak_planks'}
     A views list uses the submit_structure schema. Use the Python Structure library for typed block entities.
     """
-    if len(size) != 3 or size[0]*size[1]*size[2] > 2_000_000:
-        raise ValueError("Milestone volume limit is 2,000,000 positions")
+    if len(size) != 3 or size[0]*size[1]*size[2] > 16_000_000:
+        raise ValueError("Volume limit is 16,000,000 positions")
     result = Structure(tuple(size))
     for operation in operations:
         op = dict(operation)

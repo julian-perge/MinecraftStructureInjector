@@ -39,3 +39,14 @@ def test_example_contains_pad_and_cleanup_sentinel(tmp_path):
 def test_out_of_bounds_is_rejected():
     with pytest.raises(ValueError):
         Structure((3,3,3)).set((3,1,1), "stone")
+
+
+def test_streamed_export_preserves_typed_block_entity_and_is_deterministic(tmp_path):
+    entity=nbtlib.Compound({"id":nbtlib.String("minecraft:chest"),"Items":nbtlib.List[nbtlib.Compound]([
+        nbtlib.Compound({"Slot":nbtlib.Byte(0),"id":nbtlib.String("minecraft:diamond"),"count":nbtlib.Int(3)})])})
+    s=Structure((80,40,80)).set((79,39,79),"chest",{"facing":"west"},entity)
+    s.save(tmp_path/"one.nbt");s.save(tmp_path/"two.nbt")
+    assert (tmp_path/"one.nbt").read_bytes()==(tmp_path/"two.nbt").read_bytes()
+    result=nbtlib.load(tmp_path/"one.nbt")
+    assert result["blocks"][0]["nbt"]==entity
+    assert list(result["blocks"][0]["pos"])==[79,39,79]
