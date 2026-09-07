@@ -1,3 +1,5 @@
+> **Capitol image branch:** [Open the screenshot gallery](gallery/README.md) for all three iterations, 16 final views, and the unmodded Minecraft check.
+
 # Minecraft Structure Lab
 
 A NeoForge 26.2 mod and local MCP server for generating NBT structures, placing each revision into a dedicated superflat world, and returning labeled screenshots rendered by Minecraft.
