@@ -1,8 +1,8 @@
-> **Capitol image branch:** [Open the screenshot gallery](gallery/README.md) for all three iterations, 16 final views, and the unmodded Minecraft check.
-
 # Minecraft Structure Lab
 
 A NeoForge 26.2 mod and local MCP server for generating NBT structures, placing each revision into a dedicated superflat world, and returning labeled screenshots rendered by Minecraft.
+
+Browse the [build galleries](gallery/README.md), starting with the [Nebraska State Capitol](gallery/nebraska-capitol/README.md): three iterations, 16 final views, and an unmodded Minecraft check.
 
 Version 0.2.0 extends the generate → validate → replace → capture → revise → export loop to large builds. The Nebraska State Capitol example occupies 185 × 130 × 185 blocks and was refined through three real Minecraft capture reviews. It uses one real client camera sequentially. No extra renderer, RCON server, or manual camera cycling is needed.
 
