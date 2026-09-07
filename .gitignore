@@ -1,0 +1,16 @@
+.gradle/
+build/
+run/
+.work/
+.venv/
+__pycache__/
+*.egg-info/
+artifacts/
+.pytest_cache/
+dist/
+.env
+.env.*
+!.env.example
+**/connection.json
+.idea/
+*.iml

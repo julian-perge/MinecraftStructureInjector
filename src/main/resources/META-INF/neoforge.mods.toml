@@ -1,0 +1,20 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+[[mods]]
+modId="structurelab"
+version="0.1.0"
+displayName="Structure Lab"
+description='''Generate, inspect, and export structures through a local MCP connection.'''
+[[dependencies.structurelab]]
+modId="neoforge"
+type="required"
+versionRange="[26.2.0.77,)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.structurelab]]
+modId="minecraft"
+type="required"
+versionRange="[26.2,26.3)"
+ordering="NONE"
+side="BOTH"
