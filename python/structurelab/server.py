@@ -15,7 +15,7 @@ from .builder import Structure
 from .example import house
 
 mcp = FastMCP("Minecraft Structure Lab")
-DEFAULT_INSTANCE = Path(os.environ.get("APPDATA", "~")) / "ModrinthApp/profiles/NeoForge 26.2"
+DEFAULT_INSTANCE = Path(os.environ.get("APPDATA", "~")) / "ModrinthApp/profiles/NeoForge 1.21.1"
 connection_path = Path(os.environ.get("STRUCTURELAB_CONNECTION", str(DEFAULT_INSTANCE / "structurelab/connection.json")))
 
 
@@ -54,6 +54,26 @@ def lab_status() -> dict:
 def list_blocks(query: str = "") -> dict:
     """Find up to 200 block IDs and their valid properties from the live game."""
     return rpc("blocks", query=query)
+
+
+@mcp.tool()
+def inspect_player_clearance(positions: list[list[float]]) -> dict:
+    """Check native collision clearance and support for a standing player at relative feet positions.
+
+    This samples a 0.6 x 1.8 block body. It is a static check, not a movement simulation.
+    """
+    return rpc("clearance", positions=positions)
+
+
+@mcp.tool()
+def test_walking_route(positions: list[list[float]]) -> dict:
+    """Test a route using native server-player collision and stair movement, without jumping.
+
+    Hidden lab only, after capture completes. Positions are relative feet coordinates,
+    at most four metres apart. Restores the player's position and mode afterwards.
+    This exercises native movement, not keyboard input or a full gameplay simulation.
+    """
+    return rpc("walk_route", positions=positions)
 
 
 @mcp.tool()
@@ -163,7 +183,7 @@ def generate_example_house(output_path: str, revision: int = 1) -> dict:
 
 @mcp.tool()
 def export_structure(revision: str, output_path: str, namespace: str = "lab_export", name: str = "house") -> dict:
-    """Export a verified revision as clean NBT plus a vanilla 26.2 datapack ZIP. No lab blocks survive."""
+    """Export a verified revision as clean NBT plus a vanilla 1.21.1 datapack ZIP. No lab blocks survive."""
     job = require_revision(revision)
     if job["state"] != "complete":
         raise ValueError("Only fully captured revisions can be exported")
@@ -179,7 +199,7 @@ def export_structure(revision: str, output_path: str, namespace: str = "lab_expo
     shutil.copyfile(source, output)
     pack = output.with_suffix(".zip")
     with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as z:
-        z.writestr("pack.mcmeta", json.dumps({"pack": {"description": "Structure Lab clean export for Minecraft 26.2", "min_format": [107, 1], "max_format": [107, 1]}}))
+        z.writestr("pack.mcmeta", json.dumps({"pack": {"description": "Structure Lab clean export for Minecraft 1.21.1", "pack_format": 48}}))
         z.write(output, f"data/{namespace}/structure/{name}.nbt")
     return {"nbt": str(output), "datapack": str(pack), "dependencies": dependencies,
             "place_command": f"/place template {namespace}:{name} ~ ~ ~", "revision": revision}

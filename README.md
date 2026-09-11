@@ -1,6 +1,10 @@
 # Minecraft Structure Lab
 
-A NeoForge 26.2 mod and local MCP server for generating NBT structures, placing each revision into a dedicated superflat world, and returning labeled screenshots rendered by Minecraft.
+**Local development branch: Minecraft 1.21.1 / NeoForge 21.1.250 / Java 21.** See [background testing and local installation](docs/BACKGROUND_TESTING.md) and the [Raid research notes](docs/RAID_RESEARCH.md). The release descriptions below document historical 26.2 builds. This branch has not been pushed or released.
+
+A NeoForge mod and local MCP server for generating NBT structures, placing each revision into a dedicated superflat world, and returning labeled screenshots rendered by Minecraft.
+
+The local 1.21.1 build includes [Classic Raid](docs/RAID.md), with [121 camera views](gallery/raid/index.html), four review passes and verified connecting walking routes.
 
 Browse the [build galleries](gallery/README.md), starting with the [Nebraska State Capitol](gallery/nebraska-capitol/README.md): three iterations, 16 final views, and an unmodded Minecraft check.
 
@@ -8,12 +12,12 @@ Version 0.2.0 extends the generate → validate → replace → capture → revi
 
 ## Install
 
-Download the JAR and MCP wheel from the [latest release](https://github.com/ewitulsk/MinecraftStructureInjector/releases/latest).
+For this local Minecraft 1.21.1 branch, follow [local installation and background testing](docs/BACKGROUND_TESTING.md). The [published releases](https://github.com/ewitulsk/MinecraftStructureInjector/releases/latest) describe historical Minecraft 26.2 builds.
 
 - **[Install the Minecraft mod](docs/INSTALL_MOD.md)** — Modrinth setup, supported versions, and creating the Structure Lab world.
 - **[Install the MCP server](docs/INSTALL_MCP.md)** — Python setup, Codex registration, generic MCP configuration, and a first capture.
 
-The tested setup is Windows, Minecraft Java **26.2**, and NeoForge **26.2.0.79**. This release requires NeoForge **26.2.0.77 or newer within Minecraft 26.2**, Java 25 for Minecraft, and Python 3.11+ for MCP. Minecraft and MCP run on the same machine. The JAR alone does not install the MCP server.
+The current tested setup is Windows, Minecraft Java **1.21.1**, NeoForge **21.1.250**, Java **21**, and Python **3.11+**. The linked historical 26.2 releases require their matching Minecraft, NeoForge and Java versions. Minecraft and MCP run on the same machine. The JAR alone does not install the MCP server.
 
 ![Nebraska State Capitol captured automatically in Minecraft](docs/images/capitol-aerial.jpg)
 
@@ -35,7 +39,9 @@ The mod exposes a local HTTP bridge; the external Python process exposes MCP ove
 | `job_status` / `cancel_job` | Poll or cancel a specific revision. |
 | `list_captures` / `get_capture` | List labels and return individual MCP image content. |
 | `inspect_blocks` | Read authoritative placed block states. |
-| `export_structure` | Copy the clean NBT and package a vanilla 26.2 datapack ZIP. |
+| `inspect_player_clearance` | Check player-sized collision and floor support at relative feet positions. |
+| `test_walking_route` | Exercise native player movement without jumping in the hidden lab. |
+| `export_structure` | Copy the clean NBT and package a vanilla 1.21.1 datapack ZIP. |
 
 Example calls, using absolute paths:
 
@@ -114,7 +120,7 @@ Limits are explicit resource budgets, not claims that every maximum-size combina
 
 - Width and length: at most 1024 each. Height: at most the world permits; the default lab origin permits **380** blocks through Y=319.
 - Bounding volume: **16,000,000 positions**, even for sparse NBT. Combined old/new cleanup bounding volume: **32,000,000 positions**. At most **1,000,000 explicit block records**, 64 MiB compressed input, and a 256 MiB NBT accounting budget. Very different shapes may require a fresh lab world.
-- Up to 1024 angle definitions are accepted. Tested examples include the five-angle house and the 429,341-record Capitol with 16 angles at 1920×1080. The full 1024-angle limit and maximum volume have not been performance-qualified.
+- Up to 1024 angle definitions are accepted. Tested examples include the five-angle house and the 429,341-record Capitol with 16 angles at 1920×1080. Raid additionally qualified 121 angles and a 496,949-record portable export on 1.21.1. The full 1024-angle limit and maximum volume have not been performance-qualified.
 - One palette; entity templates and multi-palette structures are rejected. Block entities are supported, but arbitrary mod-specific block-entity behavior is not comprehensively validated.
 - No disk quota, automatic failed-job pruning, dedicated-server/RCON workflow, or shader compatibility guarantee yet.
 - Export removes Structure Lab pads. Builds using other mods retain those dependencies; `export_structure` reports their namespaces. The example exports with no non-vanilla dependencies.
@@ -134,24 +140,108 @@ Copy the ZIP into a target world's `datapacks` folder, run `/reload`, then:
 /place template lab_export:house 0 -60 0
 ```
 
-Namespace and name can be changed in the export call. The exported format targets Minecraft Java 26.2, DataVersion 4903, datapack format 107.1.
+Namespace and name can be changed in the export call. The exported format on this branch targets Minecraft Java **1.21.1**, DataVersion **3955**, datapack format **48**.
 
-## Build and install elsewhere
+## Building the mod and MCP server
 
-Java 25 and Python 3.11+ are required. This project compiles against NeoForge 26.2.0.77; the actual Modrinth run was on 26.2.0.79.
+Run these commands from the repository root in PowerShell. Set the Java path to your Java 21 installation:
 
 ```powershell
+$env:JAVA_HOME = 'C:\Program Files\Java\jdk-21.0.11'
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev,research]"
 .\gradlew.bat build --console=plain
-py -3.13 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e . pytest
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-In a stopped Modrinth NeoForge 26.2 instance, select **Content → Upload files** and choose `build/libs/structurelab-26.2-0.2.0.jar` (not the sources JAR), then launch it and create a Structure Lab world.
+The mod output is `build/libs/structurelab-1.21.1-0.3.0-dev.jar`. Copy it into a stopped Minecraft 1.21.1 / NeoForge 21.1.250 instance's `mods` folder, launch, and create a world with the Structure Lab preset. The editable Python installation provides the MCP server. See [local installation and MCP configuration](docs/BACKGROUND_TESTING.md) for ordinary and background launches.
 
-See [MCP installation](docs/INSTALL_MCP.md) for release-wheel installation, source installation, and client registration. Set `STRUCTURELAB_CONNECTION` to the absolute connection-file path when running the integration scripts against an instance other than the default Modrinth `NeoForge 26.2` profile.
+## Structure building and testing process
 
-## Verification
+The working loop is **research → generate NBT and cameras → validate → place and capture in Minecraft → review images and movement → revise → export**. A successful generation or screenshot batch alone does not establish that a build looks right or is playable.
+
+### 1. Research and author the structure
+
+Establish the layout, scale, landmarks, materials and connecting paths from overhead imagery and multiple ground-level references. Record sources and uncertain measurements. For Raid, the [research notes](docs/RAID_RESEARCH.md) explain the original BO2 scene, metre-scale checks, reference renders, and Blender preprocessing commands. Downloaded reference assets and the sampled grid are local inputs, not bundled dependencies; a fresh checkout needs those inputs before running the Raid generator.
+
+Use the Python `Structure` builder or MCP generation tools to create a vanilla block palette and named cameras. Include an exterior overview, entrances, key interiors, and views along important routes. Camera positions are feet coordinates relative to the structure origin; each position can have multiple labeled angles. Adapt stairs, slabs, headroom and openings for Minecraft movement. Include explicit air where portable placement must clear interior space.
+
+For Raid, after preparing `artifacts/raid/reference-grid`, generate into a fresh evidence folder:
+
+```powershell
+.\.venv\Scripts\python.exe examples/raid.py --revision 4 --explicit-air --output artifacts/raid/new-review
+```
+
+This produces `raid.nbt`, `raid.views.json`, material/build metadata and `route-repairs.json`. Revision options 1–4 select the refinement stages; revision 4 includes the latest accessibility fixes. The retained review history documents earlier results, which may precede subsequent fixes to that stage's generator.
+
+### 2. Start an isolated background client
+
+The launcher follows the approach used by Planetary Sable: a separate game directory, an invisible and unfocused GLFW window, no mouse capture, and actual GPU rendering. Hidden behavior is opt-in; ordinary Minecraft launches remain interactive.
+
+```powershell
+.\.venv\Scripts\python.exe scripts/launch_hidden.py --scenario smoke --jar build/libs/structurelab-1.21.1-0.3.0-dev.jar
+.\.venv\Scripts\python.exe scripts/launch_hidden.py --scenario lab --jar build/libs/structurelab-1.21.1-0.3.0-dev.jar --directory artifacts/my-lab
+$env:STRUCTURELAB_CONNECTION = (Resolve-Path artifacts/my-lab/structurelab/connection.json).Path
+.\.venv\Scripts\python.exe -c "from structurelab.server import lab_status; print(lab_status())"
+```
+
+The smoke scenario verifies a rendered frame and exits. The lab scenario waits for readiness, creates or reopens its own lab world, and stays running. Confirm `lab_world: true` before submission. `--jar` tests the packaged mod instead of loose development classes, while still using Gradle's Minecraft runtime and assets. Logs and launch information stay in the isolated directory. Keep its connection file private.
+
+### 3. Validate, submit and capture
+
+```powershell
+.\.venv\Scripts\python.exe scripts/capture_build.py artifacts/raid/new-review --name raid
+```
+
+This script initializes a real MCP stdio session, validates the NBT against the live game, submits it, waits for automatic replacement and camera capture, retrieves the images, and exports the result. It replaces the active lab structure. For another build, supply a folder containing matching `<name>.nbt` and `<name>.views.json` files and change `--name`.
+
+Evidence includes labeled 1920×1080 PNGs, `manifest.json`, timing, review contact sheets, and clean NBT/datapack exports. Inspect every contact sheet and open individual images where details are unclear. Check scale, silhouettes, materials, lighting, camera obstruction, interior furnishings and route entrances. Write the findings and intended corrections in that iteration's `review.md` before generating the next version.
+
+For camera-only changes, add `--recapture` to the capture command. It captures the currently loaded completed structure without replacing blocks; ensure that structure is the intended one. Preserve evidence before another capture or submission overwrites it.
+
+### 4. Test movement and refine
+
+Static clearance and walking tests complement visual inspection. `inspect_player_clearance` checks a player-sized collision box and supporting floor. `test_walking_route` invokes native server player movement and stair collision without jumping, then restores player state. Walking tests require the isolated hidden lab and a completed capture job.
+
+For the currently loaded Raid revision:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/walk_routes.py artifacts/raid/new-review
+```
+
+The script reads that folder's route definitions, tests each in both directions, and saves `native-walking.json`. Check every result and the printed passing count; the script does not currently exit nonzero merely because a route failed. The loaded structure must match the route file. Fix failed landings, blocked headroom or discontinuities in the generator, regenerate, recapture the affected views, and rerun movement checks. Run a full visual regression when changes affect broader geometry.
+
+These checks establish selected collision and traversal behavior, not keyboard input, multiplayer combat balance, redstone behavior, or every possible route.
+
+### 5. Export and retain review evidence
+
+Export only the completed, reviewed revision. Check the reported dependency namespaces; a vanilla deliverable should have none. Keep the clean NBT, datapack, camera sidecar, manifest and verification results together. Place the exported datapack using `/place template` as described above; the structure-block editor is not the intended loader for large builds.
+
+Store compact galleries under `gallery/<build-name>/` so other builds can coexist. The mod prunes the previous successful revision after successful replacement, but copied evidence and failed jobs remain until explicitly cleaned up. Keep review sheets and final evidence when removing redundant captures.
+
+Stop the isolated client after testing:
+
+```powershell
+.\.venv\Scripts\python.exe -c "from structurelab.server import rpc; rpc('shutdown')"
+```
+
+### Raid results and retained evidence
+
+The final classic Los Angeles Raid reconstruction is **150 × 64 × 170 blocks**, on a **one-block-per-metre grid**, with **496,949 block records** including interior air. Minecraft stairs, slabs, openings and furniture deliberately adapt the source geometry for playability.
+
+| Stage | Review and changes |
+| --- | --- |
+| [Pass 1](gallery/raid/pass-1/review.md) | 121 captures; baseline layout and material conversion exposed color and camera issues. |
+| [Pass 2](gallery/raid/pass-2/review.md) | 121 captures; corrected materials, camera placement and initial stairs. |
+| [Pass 3](gallery/raid/pass-3/review.md) | 121 captures; lighting, court detail and connecting routes; movement checks exposed stair junction failures. |
+| [Pass 4](gallery/raid/pass-4/review.md) | 121 captures; furnishings, interior cameras and landing refinements. |
+| Final qualification | 121-view regression, followed by 13 targeted junction rechecks and corrected stair transitions. |
+
+The qualified build passed **56/56 native walking checks** across 28 routes in both directions without jumping, plus clear/support checks at **29/29 ground camera stations**. The packaged JAR passed the hidden-client smoke check, the Gradle build passed, and six Python tests passed. Testing used NeoForge 1.21.1; a separate unmodded client was not tested for Raid.
+
+Browse the [121-angle gallery](gallery/raid/index.html), [verification data](gallery/raid/verification/verification.json), and [build/download instructions](docs/RAID.md). The local `scripts/package_raid.py` and `scripts/raid_gallery.py` assemble this specific retained Raid run; they expect its `final` and `qualified` evidence folders and are not generic build commands. Generated release files live under ignored `artifacts/local-release/`. Nothing is published automatically.
+
+## Earlier milestone verification
 
 The [Capitol case study](docs/NEBRASKA_CAPITOL.md) documents three large-build iterations. Generate it with `python examples/nebraska_capitol.py --revision 3 --output artifacts/capitol/iteration-3/capitol.nbt`, then run `python scripts/capture_capitol.py artifacts/capitol/iteration-3` with the lab open. Add `--recapture` to exercise camera-only recapture of the current build. These commands replace the active lab structure or its capture set.
 

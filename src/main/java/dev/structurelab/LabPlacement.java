@@ -16,7 +16,7 @@ import java.util.concurrent.*;
 /** Clear/place one chunk column per tick; skip empty sections and retain native template BE loading. */
 public final class LabPlacement {
     private static Work active;
-    private static final int FLAGS=Block.UPDATE_CLIENTS|Block.UPDATE_SKIP_ALL_SIDEEFFECTS;
+    private static final int FLAGS=Block.UPDATE_CLIENTS|Block.UPDATE_KNOWN_SHAPE|Block.UPDATE_SUPPRESS_DROPS;
     private record Part(BlockPos offset,CompoundTag tag) {}
     private static final class Work {
         final LabBridge.Job job;
@@ -29,21 +29,21 @@ public final class LabPlacement {
     public static CompletableFuture<Void> begin(CompoundTag tag,LabBridge.Job job)throws Exception {
         LabSession.requireLab();
         if(active!=null)throw new IllegalStateException("Placement already active");
-        ListTag dims=tag.getListOrEmpty("size");int[] size={dims.getIntOr(0,0),dims.getIntOr(1,0),dims.getIntOr(2,0)},clear=size.clone();
+        ListTag dims=tag.getList("size", Tag.TAG_INT);int[] size={dims.getInt(0),dims.getInt(1),dims.getInt(2)},clear=size.clone();
         if(LabSession.previousSize!=null)for(int i=0;i<3;i++)clear[i]=Math.max(clear[i],LabSession.previousSize[i]);
         if((long)clear[0]*clear[1]*clear[2]>LabSession.MAX_VOLUME*2)throw new IllegalArgumentException("Cleanup bounding volume exceeds limit");
         Map<Long,ListTag> groups=new LinkedHashMap<>();
-        for(Tag entry:tag.getListOrEmpty("blocks")){
-            CompoundTag b=(CompoundTag)entry;ListTag pos=b.getListOrEmpty("pos");int x=pos.getIntOr(0,0),z=pos.getIntOr(2,0);
+        for(Tag entry:tag.getList("blocks", Tag.TAG_COMPOUND)){
+            CompoundTag b=(CompoundTag)entry;ListTag pos=b.getList("pos", Tag.TAG_INT);int x=pos.getInt(0),z=pos.getInt(2);
             long key=((long)(x>>4)<<32)|(z>>4);CompoundTag local=b.copy();
-            ListTag p=new ListTag();p.add(IntTag.valueOf(x&15));p.add(IntTag.valueOf(pos.getIntOr(1,0)));p.add(IntTag.valueOf(z&15));local.put("pos",p);
+            ListTag p=new ListTag();p.add(IntTag.valueOf(x&15));p.add(IntTag.valueOf(pos.getInt(1)));p.add(IntTag.valueOf(z&15));local.put("pos",p);
             groups.computeIfAbsent(key,k->new ListTag()).add(local);
         }
         List<Part> parts=new ArrayList<>();
         for(var entry:groups.entrySet()){
             int x=(int)(entry.getKey()>>32)*16,z=(int)(long)entry.getKey()*16;
             CompoundTag local=new CompoundTag();ListTag d=new ListTag();d.add(IntTag.valueOf(Math.min(16,size[0]-x)));d.add(IntTag.valueOf(size[1]));d.add(IntTag.valueOf(Math.min(16,size[2]-z)));
-            local.put("size",d);local.put("palette",tag.getListOrEmpty("palette"));local.put("blocks",entry.getValue());local.put("entities",new ListTag());
+            local.put("size",d);local.put("palette",tag.getList("palette", Tag.TAG_COMPOUND));local.put("blocks",entry.getValue());local.put("entities",new ListTag());
             parts.add(new Part(new BlockPos(x,0,z),local));
         }
         Files.writeString(LabSession.ledger,LabBridge.GSON.toJson(clear));LabSession.previousSize=clear;
@@ -68,7 +68,7 @@ public final class LabPlacement {
                 }
                 w.clearing++;
             }else if(w.placing<w.parts.size()){
-                w.job.state="placing";Part part=w.parts.get(w.placing++);StructureTemplate template=new StructureTemplate();template.load(BuiltInRegistries.BLOCK,part.tag);
+                w.job.state="placing";Part part=w.parts.get(w.placing++);StructureTemplate template=new StructureTemplate();template.load(BuiltInRegistries.BLOCK.asLookup(),part.tag);
                 BlockPos origin=LabSession.ORIGIN.offset(part.offset);
                 if(!template.placeInWorld(level,origin,origin,new StructurePlaceSettings().setKnownShape(true).setIgnoreEntities(true),net.minecraft.util.RandomSource.create(0),FLAGS))throw new IllegalStateException("Chunk template failed");
             }else{

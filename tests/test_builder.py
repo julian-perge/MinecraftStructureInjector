@@ -12,7 +12,7 @@ def test_roundtrip_states_explicit_air_and_omissions(tmp_path):
     path = tmp_path / "test.nbt"
     s.save(path)
     actual = nbtlib.load(path)
-    assert int(actual["DataVersion"]) == 4903
+    assert int(actual["DataVersion"]) == 3955
     assert len(actual["blocks"]) == 2  # omitted positions stay omitted
     assert str(actual["palette"][0]["Properties"]["facing"]) == "west"
     assert str(actual["palette"][1]["Name"]) == "minecraft:air"

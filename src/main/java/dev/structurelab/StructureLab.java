@@ -9,8 +9,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.core.HolderLookup;
+
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -23,9 +23,9 @@ public final class StructureLab {
     static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks("structurelab");
     static final DeferredRegister.Items ITEMS = DeferredRegister.createItems("structurelab");
     static final DeferredRegister<BlockEntityType<?>> ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, "structurelab");
-    public static final DeferredBlock<ViewPad> PAD = BLOCKS.registerBlock("view_pad", ViewPad::new, p -> p.strength(0.5f));
+    public static final DeferredBlock<ViewPad> PAD = BLOCKS.registerBlock("view_pad", ViewPad::new, BlockBehaviour.Properties.of().strength(0.5f));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ViewPadEntity>> PAD_ENTITY = ENTITIES.register(
-            "view_pad", () -> new BlockEntityType<>(ViewPadEntity::new, PAD.get()));
+            "view_pad", () -> BlockEntityType.Builder.of(ViewPadEntity::new, PAD.get()).build(null));
     public StructureLab(IEventBus bus) {
         ITEMS.registerSimpleBlockItem("view_pad", PAD);
         BLOCKS.register(bus); ITEMS.register(bus); ENTITIES.register(bus);
@@ -42,11 +42,11 @@ public final class StructureLab {
     public static final class ViewPadEntity extends BlockEntity {
         private CompoundTag view = new CompoundTag();
         public ViewPadEntity(BlockPos pos, BlockState state) { super(PAD_ENTITY.get(), pos, state); }
-        @Override protected void loadAdditional(ValueInput input) {
-            super.loadAdditional(input); view = input.read("view", CompoundTag.CODEC).orElseGet(CompoundTag::new);
+        @Override protected void loadAdditional(CompoundTag input, HolderLookup.Provider registries) {
+            super.loadAdditional(input, registries); view = input.getCompound("view");
         }
-        @Override protected void saveAdditional(ValueOutput output) {
-            super.saveAdditional(output); output.store("view", CompoundTag.CODEC, view);
+        @Override protected void saveAdditional(CompoundTag output, HolderLookup.Provider registries) {
+            super.saveAdditional(output, registries); output.put("view", view);
         }
     }
 }

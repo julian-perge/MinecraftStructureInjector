@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "structurelab-mcp"
-version = "0.2.0"
+version = "0.3.0.dev0"
 description = "Minecraft Structure Lab generation library and local MCP server"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -12,6 +12,7 @@ dependencies = ["mcp>=1.20,<2", "nbtlib>=2,<3", "pillow>=11,<13"]
 
 [project.optional-dependencies]
 dev = ["pytest>=9,<10"]
+research = ["numpy>=2,<3"]
 
 [project.scripts]
 structurelab-mcp = "structurelab.server:main"

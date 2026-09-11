@@ -2,15 +2,53 @@ plugins {
     id 'java-library'
     id 'net.neoforged.moddev' version '2.0.146'
 }
-version = '0.2.0'
+version = '0.3.0-dev'
 group = 'dev.structurelab'
-base { archivesName = 'structurelab-26.2' }
-java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+base { archivesName = 'structurelab-1.21.1' }
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 java.withSourcesJar()
 repositories { mavenCentral() }
 neoForge {
-    version = '26.2.0.77'
-    runs { client { client() }; server { server(); programArgument '--nogui' } }
+    version = '21.1.250'
+    runs {
+        client {
+            client()
+            gameDirectory = file(providers.gradleProperty('labRunDirectory').getOrElse('run'))
+            if (providers.gradleProperty('labHidden').getOrElse('false') == 'true') {
+                jvmArgument '-Dstructurelab.hiddenClient=true'
+                jvmArgument '-Dstructurelab.scenario=' + providers.gradleProperty('labScenario').getOrElse('smoke')
+                programArguments.addAll('--username', 'StructureLab', '--uuid', '00000000-0000-0000-0000-000000000102', '--width', '1920', '--height', '1080')
+            }
+            jvmArgument '-Xmx3G'
+        }
+        server { server(); programArgument '--nogui' }
+    }
     mods { structurelab { sourceSet(sourceSets.main) } }
 }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+// Freeze launch arguments into the isolated test directory before starting Java.
+tasks.register('exportLabLaunch') {
+    dependsOn 'prepareClientRun', 'classes'
+    doLast {
+        def directory = file(providers.gradleProperty('labRunDirectory').get())
+        directory.mkdirs()
+        def run = tasks.named('runClient').get()
+        run.classpath(run.classpathProvider)
+        def command = [run.javaLauncher.get().executablePath.asFile.absolutePath]
+        command.addAll(run.allJvmArgs)
+        command.addAll(run.jvmArgumentProviders.collectMany { it.asArguments() as List })
+        if (!run.classpath.empty) command.addAll(['-cp', run.classpath.asPath])
+        command.addAll(run.args)
+        command.addAll(run.argumentProviders.collectMany { it.asArguments() as List })
+        command = command.withIndex().collect { argument, index ->
+            if (!argument.startsWith('@')) return argument
+            def source = file(argument.substring(1).replaceAll('^"|"$', ''))
+            def snapshot = new File(directory, 'launch-arguments-' + index + '.txt')
+            snapshot.bytes = source.bytes
+            return '@' + snapshot.absolutePath
+        }
+        new File(directory, 'launch.json').text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(
+            [command: command, environment: run.environmentProperty.get(), directory: directory.absolutePath]))
+    }
+}

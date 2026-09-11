@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 import nbtlib as nbt
 
-DATA_VERSION = 4903  # Minecraft Java 26.2 version.json
+DATA_VERSION = 3955  # Minecraft Java 1.21.1
 
 
 class Structure:

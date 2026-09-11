@@ -3,18 +3,21 @@ loaderVersion="[1,)"
 license="MIT"
 [[mods]]
 modId="structurelab"
-version="0.2.0"
+version="0.3.0-dev"
 displayName="Structure Lab"
 description='''Generate, inspect, and export structures through a local MCP connection.'''
 [[dependencies.structurelab]]
 modId="neoforge"
 type="required"
-versionRange="[26.2.0.77,)"
+versionRange="[21.1.250,)"
 ordering="NONE"
 side="BOTH"
 [[dependencies.structurelab]]
 modId="minecraft"
 type="required"
-versionRange="[26.2,26.3)"
+versionRange="[1.21.1,1.21.2)"
 ordering="NONE"
 side="BOTH"
+
+[[mixins]]
+config="structurelab.mixins.json"

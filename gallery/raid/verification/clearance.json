@@ -1,0 +1,268 @@
+{
+  "method": "native_static_player_aabb",
+  "blocked": 0,
+  "unsupported": 0,
+  "samples": [
+    {
+      "position": [
+        58.5,
+        17,
+        31.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        60.5,
+        17,
+        45.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        44.5,
+        17,
+        40.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        29.5,
+        20,
+        66.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        26.5,
+        20,
+        66.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        24.5,
+        16,
+        67.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        23.5,
+        16,
+        84.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        21.5,
+        16,
+        110.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        34.5,
+        17,
+        93.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        31.5,
+        16,
+        77.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        32.5,
+        16,
+        126.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        41.5,
+        17,
+        122.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        60.5,
+        21,
+        129.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        72.5,
+        19,
+        121.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        66.5,
+        19,
+        109.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        52.5,
+        19,
+        106.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        66.5,
+        19,
+        83.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        61.5,
+        20,
+        77.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        67.5,
+        20,
+        93.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        73.5,
+        19,
+        81.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        100.5,
+        22,
+        104.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        89.5,
+        21,
+        102.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        83.5,
+        21,
+        60.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        79.5,
+        17,
+        40.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        95.5,
+        19,
+        65.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        114.5,
+        19,
+        82.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        96.5,
+        19,
+        97.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        86.5,
+        20,
+        79.5
+      ],
+      "clear": true,
+      "supported": true
+    },
+    {
+      "position": [
+        127.5,
+        20,
+        86.5
+      ],
+      "clear": true,
+      "supported": true
+    }
+  ]
+}

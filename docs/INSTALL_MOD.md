@@ -1,5 +1,7 @@
 # Install Structure Lab for Minecraft
 
+> **Local 1.21.1 branch:** use [the current mod, background launcher, and MCP instructions](BACKGROUND_TESTING.md). The instructions below describe the historical 26.2 releases.
+
 ## Requirements
 
 - Minecraft **Java Edition 26.2**.

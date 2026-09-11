@@ -42,7 +42,7 @@ public final class LabBridge {
     }
     public static void start() {
         try {
-            root=Minecraft.getInstance().gameDirectory.toPath().resolve("structurelab"); Files.createDirectories(root);
+            root=Minecraft.getInstance().gameDirectory.toPath().toAbsolutePath().normalize().resolve("structurelab"); Files.createDirectories(root);
             String token=UUID.randomUUID().toString()+UUID.randomUUID();
             HttpServer http=HttpServer.create(new InetSocketAddress(InetAddress.getByName("127.0.0.1"),0),0);
             http.setExecutor(Executors.newFixedThreadPool(2,r->{Thread t=new Thread(r,"Structure Lab HTTP");t.setDaemon(true);return t;}));
@@ -75,14 +75,23 @@ public final class LabBridge {
     static JsonObject rpc(JsonObject request)throws Exception {
         String op=request.get("op").getAsString();
         switch(op){
+            case "shutdown": {
+                if(!Boolean.getBoolean("structurelab.hiddenClient"))throw new IllegalStateException("Shutdown is available only in an isolated hidden client");
+                Minecraft.getInstance().execute(()->Minecraft.getInstance().stop());return new JsonObject();
+            }
             case "status": {JsonObject result=LabSession.status();if(job!=null)result.add("job",job.json());return result;}
             case "blocks": return onServer(()->LabSession.blocks(request.has("query")?request.get("query").getAsString():""));
             case "inspect": return onServer(()->LabSession.inspect(request.getAsJsonArray("positions")));
+            case "clearance": return onServer(()->LabSession.clearance(request.getAsJsonArray("positions")));
+            case "walk_route": {
+                if(job!=null&&!job.state.equals("complete"))throw new IllegalStateException("Finish capture before testing movement");
+                return onServer(()->LabSession.walkRoute(request.getAsJsonArray("positions")));
+            }
             case "job": {if(job==null)throw new IllegalStateException("No job submitted");return job.json();}
             case "cancel": {if(job!=null)job.cancelled=true;return job==null?new JsonObject():job.json();}
             case "validate": {
                 CompoundTag tag=onServer(()->LabSession.validate(Path.of(request.get("path").getAsString())));
-                JsonObject out=new JsonObject();out.addProperty("valid",true);out.addProperty("blocks",tag.getListOrEmpty("blocks").size());return out;
+                JsonObject out=new JsonObject();out.addProperty("valid",true);out.addProperty("blocks",tag.getList("blocks", Tag.TAG_COMPOUND).size());return out;
             }
             case "submit": {
                 onServer(()->{LabSession.requireLab();return true;});
@@ -124,7 +133,7 @@ public final class LabBridge {
             if(next.cancelled)throw new CancellationException();
             next.state="placing";persist(next);
             CompletableFuture<Void> clientReady=new CompletableFuture<>();
-            Minecraft.getInstance().execute(()->{next.pauseBefore=Minecraft.getInstance().options.pauseOnLostFocus;Minecraft.getInstance().options.pauseOnLostFocus=false;Minecraft.getInstance().gui.setScreen(null);clientReady.complete(null);});
+            Minecraft.getInstance().execute(()->{next.pauseBefore=Minecraft.getInstance().options.pauseOnLostFocus;Minecraft.getInstance().options.pauseOnLostFocus=false;Minecraft.getInstance().setScreen(null);clientReady.complete(null);});
             clientReady.get(30,TimeUnit.SECONDS);
             onServer(next,()->LabPlacement.begin(tag,next)).get(300,TimeUnit.SECONDS);
             if(next.cancelled)throw new CancellationException();

@@ -1,0 +1,39 @@
+{
+  "minecraft": "1.21.1",
+  "neoforge": "21.1.250",
+  "revision": "ca084423-b86c-4704-b117-839839d8201d",
+  "size": [
+    150,
+    64,
+    170
+  ],
+  "metres_per_block": 1,
+  "block_records": 496949,
+  "refinement_passes": 4,
+  "angles_per_pass": 121,
+  "final_regression_captures": 121,
+  "targeted_junction_recheck_captures": 13,
+  "native_route_directions_passed": 56,
+  "native_route_directions_total": 56,
+  "camera_stations_clear_and_supported": 29,
+  "movement_method": "native_server_player_move_no_jump",
+  "unmodded_client_tested": false,
+  "files": {
+    "raid-datapack.zip": {
+      "bytes": 466084,
+      "sha256": "14c4e5d0374240a40545c9d656a72f0e41aecd5bf5aafee9260959d8bcb86422"
+    },
+    "raid.nbt": {
+      "bytes": 1511617,
+      "sha256": "0fa952ae2439c03882a0d21e5d6b75d53e889688e536b4ea957297c867fdfb7f"
+    },
+    "structurelab-1.21.1-0.3.0-dev.jar": {
+      "bytes": 55449,
+      "sha256": "717ca8225c7bb07229dc689e166ccf5548b46896cf05cf974f7dedc64fc617f5"
+    },
+    "structurelab_mcp-0.3.0.dev0-py3-none-any.whl": {
+      "bytes": 15601,
+      "sha256": "fcdde80c4d060282a51ab2d9c36b0025e9456c3a2ae044877197e553c21a633d"
+    }
+  }
+}

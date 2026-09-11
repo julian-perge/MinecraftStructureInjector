@@ -1,5 +1,7 @@
 # Install the Structure Lab MCP server
 
+> **Local 1.21.1 branch:** use [the current checkout installation and MCP configuration](BACKGROUND_TESTING.md). The release-wheel instructions below describe the historical 26.2 releases.
+
 The MCP server is a local Python process, separate from the Minecraft JAR. Your MCP client launches it over **stdio**. It then connects to the mod's authenticated localhost HTTP bridge. RCON is not needed.
 
 ## 1. Install the mod and Python
