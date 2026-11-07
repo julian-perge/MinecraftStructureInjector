@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Local transport. No remote binding, arbitrary command execution, or world creation API. */
+/** Local transport, bound to 127.0.0.1 only. LabTestOps adds command execution and world creation for testing other mods. */
 public final class LabBridge {
     public static final Gson GSON=new GsonBuilder().setPrettyPrinting().create();
     public static Path root;
@@ -74,6 +74,7 @@ public final class LabBridge {
     }
     static JsonObject rpc(JsonObject request)throws Exception {
         String op=request.get("op").getAsString();
+        if(LabTestOps.handles(op))return LabTestOps.rpc(op,request);
         switch(op){
             case "status": {JsonObject result=LabSession.status();if(job!=null)result.add("job",job.json());return result;}
             case "blocks": return onServer(()->LabSession.blocks(request.has("query")?request.get("query").getAsString():""));
