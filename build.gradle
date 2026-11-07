@@ -7,7 +7,15 @@ group = 'dev.structurelab'
 base { archivesName = 'structurelab-1.21.1' }
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 java.withSourcesJar()
-repositories { mavenCentral() }
+repositories {
+    mavenCentral()
+    exclusiveContent {
+        forRepository { maven { url = 'https://api.modrinth.com/maven' } }
+        filter { includeGroup 'maven.modrinth' }
+    }
+}
+// Jade is only compiled against, so LabJade can read its tooltips. Structure Lab still loads without Jade.
+dependencies { compileOnly 'maven.modrinth:jade:15.10.6+neoforge' }
 neoForge {
     version = '21.1.250'
     runs {
