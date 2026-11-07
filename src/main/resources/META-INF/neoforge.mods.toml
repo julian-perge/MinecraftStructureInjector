@@ -9,12 +9,12 @@ description='''Generate, inspect, and export structures through a local MCP conn
 [[dependencies.structurelab]]
 modId="neoforge"
 type="required"
-versionRange="[26.2.0.77,)"
+versionRange="[26.1.2.106,)"
 ordering="NONE"
 side="BOTH"
 [[dependencies.structurelab]]
 modId="minecraft"
 type="required"
-versionRange="[26.2,26.3)"
+versionRange="[26.1,26.2)"
 ordering="NONE"
 side="BOTH"

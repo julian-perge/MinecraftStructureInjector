@@ -9,7 +9,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 java.withSourcesJar()
 repositories { mavenCentral() }
 neoForge {
-    version = '26.2.0.77'
+    version = '26.1.2.106'
     runs { client { client() }; server { server(); programArgument '--nogui' } }
     mods { structurelab { sourceSet(sourceSets.main) } }
 }
