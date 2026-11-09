@@ -50,7 +50,7 @@ public final class LabSession {
     public static JsonObject status() {
         JsonObject out = new JsonObject();
         out.addProperty("connected", server != null); out.addProperty("lab_world", isLab());
-        out.addProperty("minecraft", "26.2"); out.addProperty("max_width", 1024); out.addProperty("max_length", 1024);
+        out.addProperty("minecraft", "26.1.2"); out.addProperty("max_width", 1024); out.addProperty("max_length", 1024);
         out.addProperty("max_angles", 1024); out.addProperty("max_volume", MAX_VOLUME);
         out.addProperty("max_clear_volume", MAX_VOLUME * 2);
         out.addProperty("max_blocks", MAX_BLOCKS); out.addProperty("placement", "chunk_batched");

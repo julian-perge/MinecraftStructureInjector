@@ -19,7 +19,7 @@ from .builder import Structure
 from .example import house
 
 mcp = FastMCP("Minecraft Structure Lab")
-DEFAULT_INSTANCE = Path(os.environ.get("APPDATA", "~")) / "ModrinthApp/profiles/NeoForge 26.2"
+DEFAULT_INSTANCE = Path(os.environ.get("APPDATA", "~")) / "ModrinthApp/profiles/NeoForge 26.1.2"
 connection_path = Path(
     os.environ.get("STRUCTURELAB_CONNECTION", str(DEFAULT_INSTANCE / "structurelab/connection.json"))
 )
@@ -183,7 +183,7 @@ def generate_example_house(output_path: str, revision: int = 1) -> dict:
 
 @mcp.tool()
 def export_structure(revision: str, output_path: str, namespace: str = "lab_export", name: str = "house") -> dict:
-    """Export a verified revision as clean NBT plus a vanilla 26.2 datapack ZIP. No lab blocks survive."""
+    """Export a verified revision as clean NBT plus a vanilla 26.1.2 datapack ZIP. No lab blocks survive."""
     job = require_revision(revision)
     if job["state"] != "complete":
         raise ValueError("Only fully captured revisions can be exported")
@@ -204,9 +204,9 @@ def export_structure(revision: str, output_path: str, namespace: str = "lab_expo
             json.dumps(
                 {
                     "pack": {
-                        "description": "Structure Lab clean export for Minecraft 26.2",
-                        "min_format": [107, 1],
-                        "max_format": [107, 1],
+                        "description": "Structure Lab clean export for Minecraft 26.1.2",
+                        "min_format": [101, 1],
+                        "max_format": [101, 1],
                     }
                 }
             ),

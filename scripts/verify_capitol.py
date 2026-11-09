@@ -72,7 +72,7 @@ async def main():
         "previous_runtime_revision_removed": True,
         "final_revision": job["revision"],
         "nbt_sha256": hashlib.sha256(template.read_bytes()).hexdigest(),
-        "jar_sha256": hashlib.sha256(Path("build/libs/structurelab-26.2-0.2.0.jar").read_bytes()).hexdigest(),
+        "jar_sha256": hashlib.sha256(Path("build/libs/structurelab-26.1.2-0.2.0.jar").read_bytes()).hexdigest(),
     }
     (folder / "verification.json").write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))

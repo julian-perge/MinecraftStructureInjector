@@ -10,7 +10,7 @@ from pathlib import Path
 
 import nbtlib as nbt
 
-DATA_VERSION = 4903  # Minecraft Java 26.2 version.json
+DATA_VERSION = 4790  # Minecraft Java 26.1.2 version.json
 
 
 class Structure:
