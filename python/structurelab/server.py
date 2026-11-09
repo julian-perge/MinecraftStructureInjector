@@ -1,22 +1,28 @@
 """MCP entry point. All tool results come from the running game or revision files."""
+
 from __future__ import annotations
+
 import argparse
 import json
 import os
-from pathlib import Path
 import re
 import shutil
-import urllib.request
 import urllib.error
+import urllib.request
 import zipfile
-from mcp.server.fastmcp import FastMCP, Image
+from pathlib import Path
+
 import nbtlib
+from mcp.server.fastmcp import FastMCP, Image
+
 from .builder import Structure
 from .example import house
 
 mcp = FastMCP("Minecraft Structure Lab")
 DEFAULT_INSTANCE = Path(os.environ.get("APPDATA", "~")) / "ModrinthApp/profiles/NeoForge 26.2"
-connection_path = Path(os.environ.get("STRUCTURELAB_CONNECTION", str(DEFAULT_INSTANCE / "structurelab/connection.json")))
+connection_path = Path(
+    os.environ.get("STRUCTURELAB_CONNECTION", str(DEFAULT_INSTANCE / "structurelab/connection.json"))
+)
 
 
 def rpc(op: str, **args):
@@ -25,10 +31,13 @@ def rpc(op: str, **args):
     connection = json.loads(connection_path.read_text(encoding="utf-8"))
     if not re.fullmatch(r"http://127\.0\.0\.1:\d+/rpc", connection["url"]):
         raise ValueError("Only a localhost mod connection is allowed")
-    request = urllib.request.Request(connection["url"], data=json.dumps(dict(op=op, **args)).encode(),
-                                     headers={"Content-Type": "application/json", "Authorization": "Bearer " + connection["token"]})
+    request = urllib.request.Request(  # noqa: S310
+        connection["url"],
+        data=json.dumps(dict(op=op, **args)).encode(),
+        headers={"Content-Type": "application/json", "Authorization": "Bearer " + connection["token"]},
+    )
     try:
-        with urllib.request.urlopen(request, timeout=100) as response:
+        with urllib.request.urlopen(request, timeout=100) as response:  # noqa: S310
             result = json.load(response)
     except urllib.error.HTTPError as exc:
         raise RuntimeError(exc.read().decode()) from exc
@@ -109,7 +118,12 @@ def list_captures(revision: str, offset: int = 0, limit: int = 20) -> dict:
     if offset < 0 or not 1 <= limit <= 100:
         raise ValueError("offset >= 0; limit between 1 and 100")
     job = require_revision(revision)
-    return {"revision": revision, "state": job["state"], "total": len(job["captures"]), "captures": job["captures"][offset:offset+limit]}
+    return {
+        "revision": revision,
+        "state": job["state"],
+        "total": len(job["captures"]),
+        "captures": job["captures"][offset : offset + limit],
+    }
 
 
 @mcp.tool()
@@ -131,7 +145,9 @@ def inspect_blocks(positions: list[list[int]]) -> dict:
 
 
 @mcp.tool()
-def generate_structure(output_path: str, size: list[int], operations: list[dict], views: list[dict] | None = None) -> dict:
+def generate_structure(
+    output_path: str, size: list[int], operations: list[dict], views: list[dict] | None = None
+) -> dict:
     """Generate NBT from set/fill/room operations; no Python code execution required.
 
     set: {op:'set',pos:[x,y,z],block:'minecraft:stone',properties:{}}
@@ -139,16 +155,20 @@ def generate_structure(output_path: str, size: list[int], operations: list[dict]
     room: {op:'room',start:[x,y,z],end:[x,y,z],wall:'oak_planks',floor:'stone',roof:'oak_planks'}
     A views list uses the submit_structure schema. Use the Python Structure library for typed block entities.
     """
-    if len(size) != 3 or size[0]*size[1]*size[2] > 16_000_000:
+    if len(size) != 3 or size[0] * size[1] * size[2] > 16_000_000:
         raise ValueError("Volume limit is 16,000,000 positions")
     result = Structure(tuple(size))
     for operation in operations:
         op = dict(operation)
         name = op.pop("op")
-        if name == "set": result.set(**op)
-        elif name == "fill": result.fill(**op)
-        elif name == "room": result.room(**op)
-        else: raise ValueError(f"Unknown operation: {name}")
+        if name == "set":
+            result.set(**op)
+        elif name == "fill":
+            result.fill(**op)
+        elif name == "room":
+            result.room(**op)
+        else:
+            raise ValueError(f"Unknown operation: {name}")
     result.views = views or []
     return result.save(output_path)
 
@@ -179,14 +199,30 @@ def export_structure(revision: str, output_path: str, namespace: str = "lab_expo
     shutil.copyfile(source, output)
     pack = output.with_suffix(".zip")
     with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as z:
-        z.writestr("pack.mcmeta", json.dumps({"pack": {"description": "Structure Lab clean export for Minecraft 26.2", "min_format": [107, 1], "max_format": [107, 1]}}))
+        z.writestr(
+            "pack.mcmeta",
+            json.dumps(
+                {
+                    "pack": {
+                        "description": "Structure Lab clean export for Minecraft 26.2",
+                        "min_format": [107, 1],
+                        "max_format": [107, 1],
+                    }
+                }
+            ),
+        )
         z.write(output, f"data/{namespace}/structure/{name}.nbt")
-    return {"nbt": str(output), "datapack": str(pack), "dependencies": dependencies,
-            "place_command": f"/place template {namespace}:{name} ~ ~ ~", "revision": revision}
+    return {
+        "nbt": str(output),
+        "datapack": str(pack),
+        "dependencies": dependencies,
+        "place_command": f"/place template {namespace}:{name} ~ ~ ~",
+        "revision": revision,
+    }
 
 
 def main():
-    global connection_path
+    global connection_path  # noqa: PLW0603
     parser = argparse.ArgumentParser()
     parser.add_argument("--connection", type=Path, default=connection_path)
     args = parser.parse_args()

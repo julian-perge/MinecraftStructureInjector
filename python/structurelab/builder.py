@@ -1,11 +1,13 @@
 """Sparse authoring, explicit air, typed block entities, and camera metadata."""
+
 from __future__ import annotations
+
+import gzip
 import json
 import math
-import gzip
 import struct
 from pathlib import Path
-from typing import Any
+
 import nbtlib as nbt
 
 DATA_VERSION = 4903  # Minecraft Java 26.2 version.json
@@ -21,7 +23,7 @@ class Structure:
 
     def set(self, pos, block: str, properties: dict | None = None, block_entity: nbt.Compound | None = None):
         pos = tuple(pos)
-        if len(pos) != 3 or any(type(p) is not int or not 0 <= p < n for p, n in zip(pos, self.size)):
+        if len(pos) != 3 or any(type(p) is not int or not 0 <= p < n for p, n in zip(pos, self.size, strict=False)):
             raise ValueError(f"Block position {pos} is outside {self.size}")
         if ":" not in block:
             block = "minecraft:" + block
@@ -29,7 +31,7 @@ class Structure:
         return self
 
     def fill(self, start, end, block: str, properties: dict | None = None):
-        if any(a > b for a, b in zip(start, end)):
+        if any(a > b for a, b in zip(start, end, strict=False)):
             raise ValueError("Fill endpoints must be ascending")
         for x in range(start[0], end[0] + 1):
             for y in range(start[1], end[1] + 1):
@@ -39,7 +41,7 @@ class Structure:
 
     def room(self, start, end, wall="oak_planks", floor="spruce_planks", roof="oak_planks"):
         self.fill(start, end, wall)
-        self.fill((start[0]+1, start[1]+1, start[2]+1), (end[0]-1, end[1]-1, end[2]-1), "air")
+        self.fill((start[0] + 1, start[1] + 1, start[2] + 1), (end[0] - 1, end[1] - 1, end[2] - 1), "air")
         self.fill(start, (end[0], start[1], end[2]), floor)
         self.fill((start[0], end[1], start[2]), end, roof)
         return self
@@ -53,23 +55,36 @@ class Structure:
     def view(self, id: str, position, angles: list[dict], *, label=None, spawn=False, eye_height=1.62, pad=None):
         if any(v["id"] == id for v in self.views):
             raise ValueError(f"Duplicate view ID: {id}")
-        view = dict(id=id, label=label or id, position=list(position), angles=angles, spawn=spawn, eye_height=eye_height)
+        view = {
+            "id": id,
+            "label": label or id,
+            "position": list(position),
+            "angles": angles,
+            "spawn": spawn,
+            "eye_height": eye_height,
+        }
         if pad is None:
             self.views.append(view)
         else:
-            self.set(pad, "structurelab:view_pad", block_entity=nbt.Compound({
-                "id": nbt.String("structurelab:view_pad"),
-                "view": nbt.Compound({"json": nbt.String(json.dumps(view))}),
-            }))
+            self.set(
+                pad,
+                "structurelab:view_pad",
+                block_entity=nbt.Compound(
+                    {
+                        "id": nbt.String("structurelab:view_pad"),
+                        "view": nbt.Compound({"json": nbt.String(json.dumps(view))}),
+                    }
+                ),
+            )
         return self
 
     def save(self, path: str | Path) -> dict[str, str]:
         path = Path(path).resolve()
         path.parent.mkdir(parents=True, exist_ok=True)
-        if len(self.blocks)>1_000_000:
+        if len(self.blocks) > 1_000_000:
             raise ValueError("At most 1,000,000 explicit blocks")
         palette, indices = [], {}
-        for name, props, entity in self.blocks.values():
+        for name, props, _entity in self.blocks.values():
             key = (name, tuple(sorted(props.items())))
             if key not in indices:
                 indices[key] = len(palette)
@@ -77,25 +92,29 @@ class Structure:
                 if props:
                     state["Properties"] = nbt.Compound({k: nbt.String(v) for k, v in props.items()})
                 palette.append(state)
+
         # Stream NBT records rather than allocating a second giant Python NBT object tree.
         def header(kind, name):
-            name=name.encode("utf-8")
-            return bytes([kind])+struct.pack(">H",len(name))+name
-        temporary=path.with_suffix(path.suffix+".tmp")
-        with temporary.open("wb") as raw, gzip.GzipFile(filename="",mode="wb",fileobj=raw,mtime=0) as out:
-            out.write(header(10,""))
-            out.write(header(3,"DataVersion")+struct.pack(">i",DATA_VERSION))
-            out.write(header(9,"size")+b"\x03"+struct.pack(">iiii",3,*self.size))
-            out.write(header(9,"palette")+b"\x0a"+struct.pack(">i",len(palette)))
-            for state in palette: state.write(out)
-            out.write(header(9,"blocks")+b"\x0a"+struct.pack(">i",len(self.blocks)))
-            for pos,(name,props,entity) in sorted(self.blocks.items()):
-                out.write(header(9,"pos")+b"\x03"+struct.pack(">iiii",3,*pos))
-                out.write(header(3,"state")+struct.pack(">i",indices[(name,tuple(sorted(props.items())))]))
+            name = name.encode("utf-8")
+            return bytes([kind]) + struct.pack(">H", len(name)) + name
+
+        temporary = path.with_suffix(path.suffix + ".tmp")
+        with temporary.open("wb") as raw, gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as out:
+            out.write(header(10, ""))
+            out.write(header(3, "DataVersion") + struct.pack(">i", DATA_VERSION))
+            out.write(header(9, "size") + b"\x03" + struct.pack(">iiii", 3, *self.size))
+            out.write(header(9, "palette") + b"\x0a" + struct.pack(">i", len(palette)))
+            for state in palette:
+                state.write(out)
+            out.write(header(9, "blocks") + b"\x0a" + struct.pack(">i", len(self.blocks)))
+            for pos, (name, props, entity) in sorted(self.blocks.items()):
+                out.write(header(9, "pos") + b"\x03" + struct.pack(">iiii", 3, *pos))
+                out.write(header(3, "state") + struct.pack(">i", indices[(name, tuple(sorted(props.items())))]))
                 if entity is not None:
-                    out.write(header(10,"nbt"));entity.write(out)
+                    out.write(header(10, "nbt"))
+                    entity.write(out)
                 out.write(b"\x00")
-            out.write(header(9,"entities")+b"\x0a"+struct.pack(">i",0)+b"\x00")
+            out.write(header(9, "entities") + b"\x0a" + struct.pack(">i", 0) + b"\x00")
         temporary.replace(path)
         views = path.with_suffix(".views.json")
         views.write_text(json.dumps(self.views, indent=2), encoding="utf-8")

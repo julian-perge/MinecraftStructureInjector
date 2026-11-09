@@ -1,6 +1,8 @@
 """A furnished house exercising interior cameras, block entities, and replacement."""
-from .builder import Structure
+
 import nbtlib as nbt
+
+from .builder import Structure
 
 
 def house(path, revision=1):
@@ -20,9 +22,14 @@ def house(path, revision=1):
             s.fill((x, 2, z), (x, 3, z), "glass_pane", {"north": "true", "south": "true"})
     # Roof, with stepped eaves and a ridge.
     for step in range(4):
-        for z, facing in ((step, "south"), (14-step, "north")):
-            s.fill((0, 5+step, z), (16, 5+step, z), "dark_oak_stairs", {"facing": facing, "half": "bottom", "shape": "straight"})
-        s.fill((0, 5+step, step+1), (16, 5+step, 13-step), "dark_oak_planks")
+        for z, facing in ((step, "south"), (14 - step, "north")):
+            s.fill(
+                (0, 5 + step, z),
+                (16, 5 + step, z),
+                "dark_oak_stairs",
+                {"facing": facing, "half": "bottom", "shape": "straight"},
+            )
+        s.fill((0, 5 + step, step + 1), (16, 5 + step, 13 - step), "dark_oak_planks")
     s.fill((7, 1, 1), (8, 2, 1), "air")
     for y, half in ((1, "lower"), (2, "upper")):
         s.set((7, y, 1), "oak_door", {"half": half, "facing": "north", "hinge": "left", "open": "true"})
@@ -51,12 +58,20 @@ def house(path, revision=1):
     # A first-revision sentinel outside the second revision's bounds proves cleanup.
     if revision == 1:
         s.fill((18, 0, 15), (18, 3, 15), "gold_block")
+
     def angle(id, pos, target):
         return {"id": id, **s.look_at(pos, target)}
+
     pos = (8, 4, -9)
     s.view("spawn", pos, [angle("front", pos, (8, 3, 7))], label="Front facade and roof", spawn=True)
     pos = (11.5, 1, 6.5)
-    s.view("bedroom", pos, [angle("beds", pos, (11.5, 1.8, 3)), angle("window", pos, (15, 2.7, 5))], label="Bedroom", pad=(13, 1, 7))
+    s.view(
+        "bedroom",
+        pos,
+        [angle("beds", pos, (11.5, 1.8, 3)), angle("window", pos, (15, 2.7, 5))],
+        label="Bedroom",
+        pad=(13, 1, 7),
+    )
     pos = (6.5, 1, 4.5)
     s.view("living", pos, [angle("seating", pos, (3.5, 1.5, 9.5))], label="Living room")
     pos = (9.5, 1, 9.5)
