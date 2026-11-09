@@ -125,7 +125,7 @@ public final class LabBridge {
             if(next.cancelled)throw new CancellationException();
             next.state="placing";persist(next);
             CompletableFuture<Void> clientReady=new CompletableFuture<>();
-            Minecraft.getInstance().execute(()->{next.pauseBefore=Minecraft.getInstance().options.pauseOnLostFocus;Minecraft.getInstance().options.pauseOnLostFocus=false;Minecraft.getInstance().setScreen(null);clientReady.complete(null);});
+            Minecraft.getInstance().execute(()->{next.pauseBefore=Minecraft.getInstance().options.pauseOnLostFocus;Minecraft.getInstance().options.pauseOnLostFocus=false;Minecraft.getInstance().gui.setScreen(null);clientReady.complete(null);});
             clientReady.get(30,TimeUnit.SECONDS);
             onServer(next,()->LabPlacement.begin(tag,next)).get(300,TimeUnit.SECONDS);
             if(next.cancelled)throw new CancellationException();

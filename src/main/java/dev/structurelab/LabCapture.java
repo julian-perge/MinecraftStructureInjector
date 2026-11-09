@@ -27,16 +27,16 @@ public final class LabCapture {
         if(mc.player==null||mc.level==null||job.world!=LabSession.server){LabBridge.fail(job,new IllegalStateException("Client lab world not ready"));return;}
         try{
             active=job;index=0;writing=false;
-            oldPause=job.pauseBefore==null?mc.options.pauseOnLostFocus:job.pauseBefore;oldHidden=mc.options.hideGui;oldBob=mc.options.bobView().get();oldFov=mc.options.fov().get();oldCamera=mc.options.getCameraType();
+            oldPause=job.pauseBefore==null?mc.options.pauseOnLostFocus:job.pauseBefore;oldHidden=mc.gui.hud.isHidden();oldBob=mc.options.bobView().get();oldFov=mc.options.fov().get();oldCamera=mc.options.getCameraType();
             oldDistance=mc.options.renderDistance().get();int distance=oldDistance;
             for(JsonElement e:job.views)if(e.getAsJsonObject().has("render_distance"))distance=Math.max(distance,e.getAsJsonObject().get("render_distance").getAsInt());
             mc.options.renderDistance().set(distance);
             oldWidth=mc.getWindow().getScreenWidth();oldHeight=mc.getWindow().getScreenHeight();
             mc.options.pauseOnLostFocus=false;mc.options.bobView().set(false);mc.options.setCameraType(CameraType.FIRST_PERSON);
-            mc.options.hideGui=true;
-            mc.setScreen(null);mc.setCameraEntity(mc.player);
+            if(!mc.gui.hud.isHidden())mc.gui.hud.toggle();
+            mc.gui.setScreen(null);mc.setCameraEntity(mc.player);
             // On a display that scales pixels (macOS Retina), a window of W screen units has a framebuffer of W times the scale, so the window asks for the capture size divided by the scale.
-            if(!mc.getWindow().isFullscreen()){double scale=(double)mc.getWindow().getWidth()/mc.getWindow().getScreenWidth();mc.getWindow().setWindowed((int)Math.round(1920/scale),(int)Math.round(1080/scale));}
+            if(!mc.getWindow().isWindowFullscreen()){double scale=(double)mc.getWindow().getWidth()/mc.getWindow().getScreenWidth();mc.getWindow().setWindowed((int)Math.round(1920/scale),(int)Math.round(1080/scale));}
             next();
         }catch(Exception e){abort(e);}
     }
@@ -59,15 +59,15 @@ public final class LabCapture {
             if(!move.isDone())return;move.join();
             JsonObject view=active.views.get(index).getAsJsonObject();JsonArray p=view.getAsJsonArray("position");
             Vec3 target=new Vec3(p.get(0).getAsDouble(),p.get(1).getAsDouble()-60+view.get("eye_height").getAsDouble(),p.get(2).getAsDouble());
-            boolean ready=mc.screen==null&&mc.gameRenderer.getMainCamera().position().distanceToSqr(target)<0.04
-                    &&Math.abs(net.minecraft.util.Mth.wrapDegrees(mc.gameRenderer.getMainCamera().yRot()-view.get("yaw").getAsFloat()))<0.5
-                    &&Math.abs(mc.gameRenderer.getMainCamera().xRot()-view.get("pitch").getAsFloat())<0.5
+            boolean ready=mc.gui.screen()==null&&mc.gameRenderer.mainCamera().position().distanceToSqr(target)<0.04
+                    &&Math.abs(net.minecraft.util.Mth.wrapDegrees(mc.gameRenderer.mainCamera().yRot()-view.get("yaw").getAsFloat()))<0.5
+                    &&Math.abs(mc.gameRenderer.mainCamera().xRot()-view.get("pitch").getAsFloat())<0.5
                     &&mc.levelRenderer.hasRenderedAllSections()&&!mc.level.getChunkSource().getLightEngine().hasLightWork();
             BlockPos camera=BlockPos.containing(target);
             for(int x=-2;x<=2;x++)for(int z=-2;z<=2;z++)ready&=mc.level.getChunkSource().getChunk((camera.getX()>>4)+x,(camera.getZ()>>4)+z,ChunkStatus.FULL,false)!=null;
             stableFrames=ready?stableFrames+1:0;
             if(stableFrames<12||elapsed<2_000_000_000L)return;
-            var framebuffer=mc.getMainRenderTarget();
+            var framebuffer=mc.gameRenderer.mainRenderTarget();
             if(framebuffer.width!=1920||framebuffer.height!=1080)throw new IllegalStateException("Capture requires 1920x1080 framebuffer; actual "+framebuffer.width+"x"+framebuffer.height);
             writing=true;
             LabBridge.Job capturedJob=active;int capturedIndex=index;JsonObject capturedView=view.deepCopy();
@@ -96,8 +96,8 @@ public final class LabCapture {
     }
     private static void restore(){
         Minecraft mc=Minecraft.getInstance();mc.options.pauseOnLostFocus=oldPause;mc.options.bobView().set(oldBob);mc.options.fov().set(oldFov);mc.options.setCameraType(oldCamera);mc.options.renderDistance().set(oldDistance);
-        mc.options.hideGui=oldHidden;
-        if(!mc.getWindow().isFullscreen())mc.getWindow().setWindowed(oldWidth,oldHeight);
+        if(mc.gui.hud.isHidden()!=oldHidden)mc.gui.hud.toggle();
+        if(!mc.getWindow().isWindowFullscreen())mc.getWindow().setWindowed(oldWidth,oldHeight);
     }
     private static void abort(Throwable e){if(active==null)return;LabBridge.Job j=active;try{restore();}finally{active=null;writing=false;LabBridge.fail(j,e);}}
 }

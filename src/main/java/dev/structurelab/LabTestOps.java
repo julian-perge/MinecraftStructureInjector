@@ -42,7 +42,7 @@ public final class LabTestOps {
                 yield LabJade.lastTooltip();
             }
             case "guide"->onClient(()->guide(request));
-            case "close_screen"->onClient(()->{Minecraft.getInstance().setScreen(null);return new JsonObject();});
+            case "close_screen"->onClient(()->{Minecraft.getInstance().gui.setScreen(null);return new JsonObject();});
             case "screenshot"->screenshot(request.get("name").getAsString());
             case "reload"->reload();
             case "chunk_loaded"->LabBridge.onServer(()->chunkLoaded(request));
@@ -58,7 +58,7 @@ public final class LabTestOps {
     static JsonObject client(){
         Minecraft mc=Minecraft.getInstance();JsonObject out=new JsonObject();
         out.addProperty("in_world",mc.level!=null&&mc.player!=null);out.addProperty("paused",mc.isPaused());
-        out.addProperty("screen",mc.screen==null?null:mc.screen.getClass().getName());
+        out.addProperty("screen",mc.gui.screen()==null?null:mc.gui.screen().getClass().getName());
         out.addProperty("pause_on_lost_focus",mc.options.pauseOnLostFocus);
         if(mc.player!=null){
             out.add("position",LabBridge.GSON.toJsonTree(new double[]{mc.player.getX(),mc.player.getY(),mc.player.getZ()}));
@@ -74,7 +74,7 @@ public final class LabTestOps {
         LevelSettings settings=new LevelSettings(name,GameType.CREATIVE,LevelSettings.DifficultySettings.DEFAULT,true,WorldDataConfiguration.DEFAULT);
         WorldOptions options=WorldOptions.defaultWithRandomSeed().withSeed(seed);
         mc.options.pauseOnLostFocus=false;
-        mc.createWorldOpenFlows().createFreshLevel(folder,settings,options,WorldPresets::createNormalWorldDimensions,mc.screen);
+        mc.createWorldOpenFlows().createFreshLevel(folder,settings,options,WorldPresets::createNormalWorldDimensions,mc.gui.screen());
         JsonObject out=new JsonObject();out.addProperty("folder",folder);out.addProperty("seed",options.seed());return out;
     }
     // Gson's getAsLong would cut the fraction off a seed like 1.5 and wrap one beyond the range of a long, and either would quietly give a different world.
@@ -105,13 +105,13 @@ public final class LabTestOps {
         double dx=at.get(0).getAsInt()+0.5-fx,dy=at.get(1).getAsInt()+0.5-fy,dz=at.get(2).getAsInt()+0.5-fz;
         float yaw=(float)Math.toDegrees(Math.atan2(-dx,dz)),pitch=(float)-Math.toDegrees(Math.atan2(dy,Math.sqrt(dx*dx+dz*dz)));
         LabBridge.onServer(()->{ServerPlayer p=player(LabSession.server);return p.teleportTo(p.level(),fx,fy-p.getEyeHeight(),fz,Set.of(),yaw,pitch,false);});
-        onClient(()->{Minecraft.getInstance().setScreen(null);return true;});
+        onClient(()->{Minecraft.getInstance().gui.setScreen(null);return true;});
         JsonObject out=new JsonObject();out.addProperty("yaw",yaw);out.addProperty("pitch",pitch);return out;
     }
     // Oracle Index is optional, so it is reached by reflection. `item` opens the entry for an item id, and `wiki` with an optional `entry` opens a book page.
     static JsonObject guide(JsonObject request)throws Exception {
         Class<?> oracle=Class.forName("rearth.oracle.OracleClient");JsonObject out=new JsonObject();
-        Screen parent=Minecraft.getInstance().screen;
+        Screen parent=Minecraft.getInstance().gui.screen();
         if(request.has("item")){
             Object opened=oracle.getMethod("openEntry",Identifier.class,Screen.class).invoke(null,Identifier.parse(request.get("item").getAsString()),parent);
             out.addProperty("opened",(Boolean)opened);
@@ -120,14 +120,14 @@ public final class LabTestOps {
             oracle.getMethod("openScreen",String.class,Identifier.class,Screen.class).invoke(null,request.get("wiki").getAsString(),entry,parent);
             out.addProperty("opened",true);
         }
-        Screen now=Minecraft.getInstance().screen;out.addProperty("screen",now==null?null:now.getClass().getName());
+        Screen now=Minecraft.getInstance().gui.screen();out.addProperty("screen",now==null?null:now.getClass().getName());
         return out;
     }
     // The capture includes the HUD and any open screen, the same as pressing F2.
     static JsonObject screenshot(String name)throws Exception {
         if(!name.matches("[a-zA-Z0-9_-]{1,64}"))throw new IllegalArgumentException("Screenshot names must be simple file-safe names");
         CompletableFuture<String> done=new CompletableFuture<>();Minecraft mc=Minecraft.getInstance();
-        mc.execute(()->Screenshot.grab(mc.gameDirectory,name+".png",mc.getMainRenderTarget(),1,message->done.complete(message.getString())));
+        mc.execute(()->Screenshot.grab(mc.gameDirectory,name+".png",mc.gameRenderer.mainRenderTarget(),1,message->done.complete(message.getString())));
         JsonObject out=new JsonObject();out.addProperty("message",done.get(30,TimeUnit.SECONDS));
         out.addProperty("path",mc.gameDirectory.toPath().resolve("screenshots").resolve(name+".png").toString());
         return out;
@@ -137,7 +137,7 @@ public final class LabTestOps {
     static JsonObject reload()throws Exception {
         Minecraft mc=Minecraft.getInstance();long started=System.nanoTime(),deadline=started+TimeUnit.SECONDS.toNanos(90);
         CompletableFuture<Void> done=onClient(mc::reloadResourcePacks);
-        while(!done.isDone()||onClient(()->mc.getOverlay() instanceof LoadingOverlay)){
+        while(!done.isDone()||onClient(()->mc.gui.overlay() instanceof LoadingOverlay)){
             if(System.nanoTime()>deadline)throw new TimeoutException(done.isDone()?"The loading overlay did not close within 90 seconds":"The resource reload did not finish within 90 seconds. A failed reload never finishes, so look for a resource pack error in the game log");
             Thread.sleep(50);
         }

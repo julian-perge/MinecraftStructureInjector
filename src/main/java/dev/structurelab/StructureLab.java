@@ -1,6 +1,5 @@
 package dev.structurelab;
 
-import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -34,9 +33,7 @@ public final class StructureLab {
         NeoForge.EVENT_BUS.addListener(LabPlacement::tick);
     }
     public static final class ViewPad extends BaseEntityBlock {
-        public static final MapCodec<ViewPad> CODEC = simpleCodec(ViewPad::new);
         public ViewPad(BlockBehaviour.Properties properties) { super(properties); }
-        @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
         @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new ViewPadEntity(pos, state); }
     }
     public static final class ViewPadEntity extends BlockEntity {
