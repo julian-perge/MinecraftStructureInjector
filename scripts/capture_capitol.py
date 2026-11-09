@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import base64
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -38,7 +39,7 @@ def sheet(folder, job):
 async def main(args):
     folder = Path(args.folder).resolve()
     folder.mkdir(parents=True, exist_ok=True)
-    params = StdioServerParameters(command=sys.executable, args=["-m", "structurelab.server"])
+    params = StdioServerParameters(command=sys.executable, args=["-m", "structurelab.server"], env=dict(os.environ))
     async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
         await session.initialize()
 

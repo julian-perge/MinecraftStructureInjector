@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -11,13 +12,8 @@ from mcp.client.stdio import stdio_client
 
 
 async def main():
-    async with (
-        stdio_client(StdioServerParameters(command=sys.executable, args=["-m", "structurelab.server"])) as (
-            read,
-            write,
-        ),
-        ClientSession(read, write) as session,
-    ):
+    params = StdioServerParameters(command=sys.executable, args=["-m", "structurelab.server"], env=dict(os.environ))
+    async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
         await session.initialize()
 
         async def call(name, **args):

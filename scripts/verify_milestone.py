@@ -3,6 +3,7 @@
 import asyncio
 import base64
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -15,7 +16,7 @@ async def main():
     version = int(sys.argv[1]) if len(sys.argv) > 1 else 1
     evidence = Path(f"artifacts/evidence/v{version}").resolve()
     evidence.mkdir(parents=True, exist_ok=True)
-    params = StdioServerParameters(command=sys.executable, args=["-m", "structurelab.server"])
+    params = StdioServerParameters(command=sys.executable, args=["-m", "structurelab.server"], env=dict(os.environ))
     async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
         await session.initialize()
 
