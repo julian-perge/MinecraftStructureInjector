@@ -3,6 +3,7 @@
 import asyncio
 import hashlib
 import json
+import os
 import sys
 import zipfile
 from pathlib import Path
@@ -38,7 +39,7 @@ async def main():
             for dx in (0, 1):
                 pos = (min(x + dx, 184), 2, z)
                 positions.append(pos)
-    params = StdioServerParameters(command=sys.executable, args=["-m", "structurelab.server"])
+    params = StdioServerParameters(command=sys.executable, args=["-m", "structurelab.server"], env=dict(os.environ))
     async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
         await session.initialize()
 
