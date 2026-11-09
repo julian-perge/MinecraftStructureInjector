@@ -1,20 +1,63 @@
 [build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.13,<1"]
+build-backend = "uv_build"
 
 [project]
 name = "structurelab-mcp"
 version = "0.2.0"
 description = "Minecraft Structure Lab generation library and local MCP server"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.15"
 dependencies = ["mcp>=1.20,<2", "nbtlib>=2,<3", "pillow>=11,<13"]
-
-[project.optional-dependencies]
-dev = ["pytest>=9,<10"]
 
 [project.scripts]
 structurelab-mcp = "structurelab.server:main"
 
-[tool.setuptools.packages.find]
-where = ["python"]
+[dependency-groups]
+dev = ["prek>=0.5", "pytest>=9,<10", "ruff>=0.17"]
+
+[tool.uv.build-backend]
+module-name = "structurelab"
+module-root = "python"
+
+[tool.ruff]
+line-length = 120
+extend-exclude = ["*.md"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "C90",  # mccabe
+    "DTZ",  # flake8-datetimez
+    "E",    # pycodestyle errors
+    "F",    # Pyflakes
+    "FURB", # refurb
+    "I",    # isort
+    "N",    # pep8-naming
+    "PERF", # Perflint
+    "PIE",  # flake8-pie
+    "PLE",  # Pylint errors
+    "PLW",  # Pylint warnings
+    "PT",   # flake8-pytest-style
+    "PTH",  # flake8-use-pathlib
+    "RET",  # flake8-return
+    "RUF",  # Ruff-specific
+    "S",    # flake8-bandit
+    "SIM",  # flake8-simplify
+    "TID",  # flake8-tidy-imports
+    "UP",   # pyupgrade
+    "W",    # pycodestyle warnings
+]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+# The integration scripts assert on live game results without running under pytest.
+"scripts/**" = ["PT", "S101"]
+# These two files build one structure from top to bottom, so branch counts say nothing useful about them.
+"examples/nebraska_capitol.py" = ["C901"]
+"python/structurelab/example.py" = ["C901"]

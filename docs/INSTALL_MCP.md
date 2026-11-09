@@ -4,7 +4,7 @@ The MCP server is a local Python process, separate from the Minecraft JAR. Your 
 
 ## 1. Install the mod and Python
 
-Complete [mod installation](INSTALL_MOD.md), launch Minecraft, and open a Structure Lab world. Install **Python 3.11 or later**; the tested version is Python 3.13.
+Complete [mod installation](INSTALL_MOD.md), launch Minecraft, and open a Structure Lab world. Install **Python 3.15 or later**.
 
 Find the instance's `structurelab/connection.json`. Minecraft and the MCP process must run on the same machine and have access to the same files.
 
@@ -25,13 +25,12 @@ If you installed a different supported Python version, replace `-3.13` with that
 ### Alternative: install from source
 
 ```powershell
-git clone https://github.com/ewitulsk/MinecraftStructureInjector.git
+git clone https://github.com/julian-perge/MinecraftStructureInjector.git
 cd MinecraftStructureInjector
-py -3.13 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+uv sync
 ```
 
-For this alternative, use the repository's `.venv\Scripts\python.exe` path in the configuration below. Building the Java mod is not required to install MCP from source.
+This alternative needs [uv](https://docs.astral.sh/uv/). Use the repository's `.venv\Scripts\python.exe` path in the configuration below. Building the Java mod is not required to install MCP from source.
 
 ## 3. Register with Codex
 

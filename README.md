@@ -13,7 +13,7 @@ Download the JAR and MCP wheel from the [latest release](https://github.com/ewit
 - **[Install the Minecraft mod](docs/INSTALL_MOD.md)** — Modrinth setup, supported versions, and creating the Structure Lab world.
 - **[Install the MCP server](docs/INSTALL_MCP.md)** — Python setup, Codex registration, generic MCP configuration, and a first capture.
 
-The tested setup is Windows, Minecraft Java **26.2**, and NeoForge **26.2.0.79**. This release requires NeoForge **26.2.0.77 or newer within Minecraft 26.2**, Java 25 for Minecraft, and Python 3.11+ for MCP. Minecraft and MCP run on the same machine. The JAR alone does not install the MCP server.
+The tested setup is Windows, Minecraft Java **26.2**, and NeoForge **26.2.0.79**. This release requires NeoForge **26.2.0.77 or newer within Minecraft 26.2**, Java 25 for Minecraft, and Python 3.15+ for MCP. Minecraft and MCP run on the same machine. The JAR alone does not install the MCP server.
 
 ![Nebraska State Capitol captured automatically in Minecraft](docs/images/capitol-aerial.jpg)
 
@@ -138,12 +138,11 @@ Namespace and name can be changed in the export call. The exported format target
 
 ## Build and install elsewhere
 
-Java 25 and Python 3.11+ are required. This project compiles against NeoForge 26.2.0.77; the actual Modrinth run was on 26.2.0.79.
+Java 25, Python 3.15+ and [uv](https://docs.astral.sh/uv/) are required. This project compiles against NeoForge 26.2.0.77; the actual Modrinth run was on 26.2.0.79.
 
 ```powershell
 .\gradlew.bat build --console=plain
-py -3.13 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e . pytest
+uv sync
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
