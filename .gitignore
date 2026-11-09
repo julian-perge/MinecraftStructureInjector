@@ -14,3 +14,5 @@ dist/
 **/connection.json
 .idea/
 *.iml
+.DS_Store
+.recall/
