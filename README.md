@@ -8,12 +8,12 @@ Version 0.2.0 extends the generate → validate → replace → capture → revi
 
 ## Install
 
-Download the JAR and MCP wheel from the [latest release](https://github.com/ewitulsk/MinecraftStructureInjector/releases/latest).
+There is no 26.3 release yet, so build the JAR and the MCP wheel from this repository. The guides below show how.
 
 - **[Install the Minecraft mod](docs/INSTALL_MOD.md)** — Modrinth setup, supported versions, and creating the Structure Lab world.
 - **[Install the MCP server](docs/INSTALL_MCP.md)** — Python setup, Codex registration, generic MCP configuration, and a first capture.
 
-The tested setup for this version is a NeoForge **26.3.0.101** dev client on macOS. Windows and the Modrinth install in the guides above have not been tested on 26.3, and the latest release is still the 26.2 build, so build the 26.3 JAR from source. This version requires NeoForge **26.3.0.101 or newer within Minecraft 26.3**, Java 25 for Minecraft, and Python 3.15+ for MCP. Minecraft and MCP run on the same machine. The JAR alone does not install the MCP server.
+The tested setup for this version is a NeoForge **26.3.0.101** dev client on macOS. Windows and the Modrinth install in the guides above have not been tested on 26.3. This version requires NeoForge **26.3.0.101 or newer within Minecraft 26.3**, Java 25 for Minecraft, and Python 3.15+ for MCP. Minecraft and MCP run on the same machine. The JAR alone does not install the MCP server.
 
 ![Nebraska State Capitol captured automatically in Minecraft](docs/images/capitol-aerial.jpg)
 
@@ -148,7 +148,7 @@ uv sync
 
 In a stopped Modrinth NeoForge 26.3 instance, select **Content → Upload files** and choose `build/libs/structurelab-26.3-0.2.0.jar` (not the sources JAR), then launch it and create a Structure Lab world.
 
-See [MCP installation](docs/INSTALL_MCP.md) for release-wheel installation, source installation, and client registration. Set `STRUCTURELAB_CONNECTION` to the absolute connection-file path when running the integration scripts against an instance other than the default Modrinth `NeoForge 26.3` profile.
+See [MCP installation](docs/INSTALL_MCP.md) for wheel installation, source installation, and client registration. Set `STRUCTURELAB_CONNECTION` to the absolute connection-file path when running the integration scripts against an instance other than the default Modrinth `NeoForge 26.3` profile.
 
 ## Verification
 

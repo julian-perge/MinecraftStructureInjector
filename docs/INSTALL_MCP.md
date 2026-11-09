@@ -4,23 +4,24 @@ The MCP server is a local Python process, separate from the Minecraft JAR. Your 
 
 ## 1. Install the mod and Python
 
-Complete [mod installation](INSTALL_MOD.md), launch Minecraft, and open a Structure Lab world. Install **Python 3.15 or later**.
+Complete [mod installation](INSTALL_MOD.md), launch Minecraft, and open a Structure Lab world. Install **Python 3.15 or later**. The Windows commands in this guide have not been tested on 26.3.
 
 Find the instance's `structurelab/connection.json`. Minecraft and the MCP process must run on the same machine and have access to the same files.
 
-## 2. Install the release wheel
+## 2. Build and install the wheel
 
-Download **`structurelab_mcp-0.2.0-py3-none-any.whl`** from the [v0.2.0 release](https://github.com/ewitulsk/MinecraftStructureInjector/releases/tag/v0.2.0). The package is distributed as a release asset; these instructions do not assume it is published to PyPI.
-
-In PowerShell, change the wheel path if your downloads directory differs:
+The [v0.2.0 release](https://github.com/ewitulsk/MinecraftStructureInjector/releases/tag/v0.2.0) is the 26.2 build, and its wheel writes a block format that the 26.3 mod rejects. Build the wheel from this repository instead, which needs [uv](https://docs.astral.sh/uv/). In PowerShell:
 
 ```powershell
-py -3.13 -m venv "$HOME\structurelab-mcp\.venv"
-& "$HOME\structurelab-mcp\.venv\Scripts\python.exe" -m pip install "$HOME\Downloads\structurelab_mcp-0.2.0-py3-none-any.whl"
+git clone https://github.com/julian-perge/MinecraftStructureInjector.git
+cd MinecraftStructureInjector
+uv build --wheel
+py -3.15 -m venv "$HOME\structurelab-mcp\.venv"
+& "$HOME\structurelab-mcp\.venv\Scripts\python.exe" -m pip install dist\structurelab_mcp-0.2.0-py3-none-any.whl
 & "$HOME\structurelab-mcp\.venv\Scripts\python.exe" -m structurelab.server --help
 ```
 
-If you installed a different supported Python version, replace `-3.13` with that version. No environment activation is required. Pip installs the MCP SDK, NBT library, and image dependencies.
+If you installed a different supported Python version, replace `-3.15` with that version. No environment activation is required. Pip installs the MCP SDK, NBT library, and image dependencies.
 
 ### Alternative: install from source
 
@@ -37,7 +38,7 @@ This alternative needs [uv](https://docs.astral.sh/uv/). Use the repository's `.
 Use the **Codex CLI** to add the server. Replace the connection path if your instance is named differently:
 
 ```powershell
-codex mcp add structurelab -- "$HOME\structurelab-mcp\.venv\Scripts\python.exe" -m structurelab.server --connection "$env:APPDATA\ModrinthApp\profiles\NeoForge 26.2\structurelab\connection.json"
+codex mcp add structurelab -- "$HOME\structurelab-mcp\.venv\Scripts\python.exe" -m structurelab.server --connection "$env:APPDATA\ModrinthApp\profiles\NeoForge 26.3\structurelab\connection.json"
 codex mcp get structurelab
 ```
 
@@ -56,7 +57,7 @@ Add a local stdio server using your client's MCP settings. Many clients accept t
         "-m",
         "structurelab.server",
         "--connection",
-        "C:\\Users\\YOUR_NAME\\AppData\\Roaming\\ModrinthApp\\profiles\\NeoForge 26.2\\structurelab\\connection.json"
+        "C:\\Users\\YOUR_NAME\\AppData\\Roaming\\ModrinthApp\\profiles\\NeoForge 26.3\\structurelab\\connection.json"
       ]
     }
   }
@@ -88,7 +89,7 @@ Keep Minecraft rendering and avoid input during the batch. Tools accept local ab
 For repeatable tests from a source checkout:
 
 ```powershell
-$env:STRUCTURELAB_CONNECTION = "$env:APPDATA\ModrinthApp\profiles\NeoForge 26.2\structurelab\connection.json"
+$env:STRUCTURELAB_CONNECTION = "$env:APPDATA\ModrinthApp\profiles\NeoForge 26.3\structurelab\connection.json"
 .\.venv\Scripts\python.exe scripts/mcp_probe.py
 .\.venv\Scripts\python.exe scripts/verify_milestone.py 1
 .\.venv\Scripts\python.exe scripts/verify_failure.py
