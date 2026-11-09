@@ -2,19 +2,19 @@
 
 ## Requirements
 
-- Minecraft **Java Edition 26.2**.
-- NeoForge **26.2.0.77 or newer for Minecraft 26.2**. Tested with **26.2.0.79**.
+- Minecraft **Java Edition 26.1.2**.
+- NeoForge **26.1.2.106 or newer for Minecraft 26.1.2**. Tested with **26.1.2.106**.
 - Java **25** for the game. Modrinth can manage the game runtime.
-- A local graphical Minecraft client. This release targets singleplayer and was tested on Windows.
+- A local graphical Minecraft client. This version targets singleplayer and was tested in a NeoForge dev client on macOS. Windows and Modrinth have not been tested on 26.1.2.
 
 Fabric, Forge, Bedrock Edition, and a headless dedicated server are not supported by this release. No other content mods are required.
 
 ## Install with Modrinth
 
-1. Open Modrinth. Use an existing **NeoForge 26.2** instance, or select **Create instance → Custom setup → NeoForge → Game version 26.2**.
+1. Open Modrinth. Use an existing **NeoForge 26.1.2** instance, or select **Create instance → Custom setup → NeoForge → Game version 26.1.2**.
 2. Stop that instance before installing or updating the mod.
-3. Download **`structurelab-26.2-0.2.0.jar`** from the [v0.2.0 release](https://github.com/ewitulsk/MinecraftStructureInjector/releases/tag/v0.2.0).
-4. Open the instance and select **Content → Upload files**. Choose the downloaded JAR. Alternatively, copy it into the instance's `mods` directory.
+3. Build the JAR from the `26.1.2` branch of this repository with `.\gradlew.bat build`, or `./gradlew build` outside Windows. It writes **`build/libs/structurelab-26.1.2-0.2.0.jar`**. There is no 26.1.2 release, and the [v0.2.0 release](https://github.com/ewitulsk/MinecraftStructureInjector/releases/tag/v0.2.0) is the 26.2 build.
+4. Open the instance and select **Content → Upload files**. Choose that JAR. Alternatively, copy it into the instance's `mods` directory.
 5. Confirm Structure Lab is enabled and launch the instance. When updating, remove any older Structure Lab JAR with a different filename so only one version is installed.
 
 Do not install GitHub's source ZIP, the MCP wheel, or a `-sources.jar` as a Minecraft mod.
@@ -41,7 +41,7 @@ Follow **[Install the MCP server](INSTALL_MCP.md)** next. The mod writes this fi
 Find the instance folder through Modrinth's **Files** tab or its open-folder action. A typical Windows path is:
 
 ```text
-%APPDATA%\ModrinthApp\profiles\NeoForge 26.2\structurelab\connection.json
+%APPDATA%\ModrinthApp\profiles\NeoForge 26.1.2\structurelab\connection.json
 ```
 
 Use the actual instance folder, which may differ from its display name. Do not upload or share `connection.json`; it contains the bridge's local authorization token.
