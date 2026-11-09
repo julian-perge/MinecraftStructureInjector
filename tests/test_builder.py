@@ -14,10 +14,10 @@ def test_roundtrip_states_explicit_air_and_omissions(tmp_path):
     path = tmp_path / "test.nbt"
     s.save(path)
     actual = nbtlib.load(path)
-    assert int(actual["DataVersion"]) == 4903
+    assert int(actual["DataVersion"]) == 5023
     assert len(actual["blocks"]) == 2  # omitted positions stay omitted
-    assert str(actual["palette"][0]["Properties"]["facing"]) == "west"
-    assert str(actual["palette"][1]["Name"]) == "minecraft:air"
+    assert str(actual["palette"][0]["properties"]["facing"]) == "west"
+    assert str(actual["palette"][1]["id"]) == "minecraft:air"
 
 
 def test_view_angles_use_minecraft_coordinates():
@@ -32,9 +32,9 @@ def test_example_contains_pad_and_cleanup_sentinel(tmp_path):
     a, b = nbtlib.load(first["path"]), nbtlib.load(second["path"])
     assert list(map(int, a["size"])) == [19, 10, 17]
     assert list(map(int, b["size"])) == [17, 10, 17]
-    assert any(str(p["Name"]) == "structurelab:view_pad" for p in a["palette"])
-    assert any(str(p["Name"]) == "minecraft:gold_block" for p in a["palette"])
-    assert not any(str(p["Name"]) == "minecraft:gold_block" for p in b["palette"])
+    assert any(str(p["id"]) == "structurelab:view_pad" for p in a["palette"])
+    assert any(str(p["id"]) == "minecraft:gold_block" for p in a["palette"])
+    assert not any(str(p["id"]) == "minecraft:gold_block" for p in b["palette"])
     assert len(json.loads(Path(first["views_path"]).read_text(encoding="utf-8"))) == 3
 
 

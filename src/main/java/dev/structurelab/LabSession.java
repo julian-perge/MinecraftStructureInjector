@@ -50,7 +50,7 @@ public final class LabSession {
     public static JsonObject status() {
         JsonObject out = new JsonObject();
         out.addProperty("connected", server != null); out.addProperty("lab_world", isLab());
-        out.addProperty("minecraft", "26.2"); out.addProperty("max_width", 1024); out.addProperty("max_length", 1024);
+        out.addProperty("minecraft", "26.3"); out.addProperty("max_width", 1024); out.addProperty("max_length", 1024);
         out.addProperty("max_angles", 1024); out.addProperty("max_volume", MAX_VOLUME);
         out.addProperty("max_clear_volume", MAX_VOLUME * 2);
         out.addProperty("max_blocks", MAX_BLOCKS); out.addProperty("placement", "chunk_batched");
@@ -79,11 +79,11 @@ public final class LabSession {
         if (palette.isEmpty()) throw new IllegalArgumentException("Empty palette");
         for (Tag entry:palette) {
             if (!(entry instanceof CompoundTag state)) throw new IllegalArgumentException("Invalid palette entry");
-            String name=state.getString("Name").orElseThrow();
+            String name=state.getString("id").orElseThrow(()->new IllegalArgumentException("Palette entries need an id. Minecraft 26.3 renamed Name to id and Properties to properties"));
             Identifier id=Identifier.parse(name);
             if (!BuiltInRegistries.BLOCK.containsKey(id)) throw new IllegalArgumentException("Unknown block: "+name);
             Block block=BuiltInRegistries.BLOCK.getValue(id);
-            CompoundTag properties=state.getCompoundOrEmpty("Properties");
+            CompoundTag properties=state.getCompoundOrEmpty("properties");
             for (String key:properties.keySet()) {
                 var property=block.getStateDefinition().getProperty(key);
                 if (property==null || property.getValue(properties.getString(key).orElseThrow()).isEmpty()) throw new IllegalArgumentException("Invalid property: "+name+"."+key);
@@ -107,9 +107,9 @@ public final class LabSession {
     public static JsonArray extractPads(CompoundTag tag) {
         ListTag palette=tag.getListOrEmpty("palette");
         Set<Integer> pads=new HashSet<>();
-        for(int i=0;i<palette.size();i++) if(palette.getCompoundOrEmpty(i).getStringOr("Name","").equals("structurelab:view_pad")) pads.add(i);
+        for(int i=0;i<palette.size();i++) if(palette.getCompoundOrEmpty(i).getStringOr("id","").equals("structurelab:view_pad")) pads.add(i);
         JsonArray result=new JsonArray();
-        CompoundTag air=new CompoundTag(); air.putString("Name","minecraft:air");
+        CompoundTag air=new CompoundTag(); air.putString("id","minecraft:air");
         for(Tag entry:tag.getListOrEmpty("blocks")) {
             CompoundTag b=(CompoundTag)entry;
             if(!pads.contains(b.getIntOr("state",-1))) continue;

@@ -10,7 +10,7 @@ from pathlib import Path
 
 import nbtlib as nbt
 
-DATA_VERSION = 4903  # Minecraft Java 26.2 version.json
+DATA_VERSION = 5023  # Minecraft Java 26.3 version.json
 
 
 class Structure:
@@ -88,9 +88,9 @@ class Structure:
             key = (name, tuple(sorted(props.items())))
             if key not in indices:
                 indices[key] = len(palette)
-                state = nbt.Compound({"Name": nbt.String(name)})
+                state = nbt.Compound({"id": nbt.String(name)})
                 if props:
-                    state["Properties"] = nbt.Compound({k: nbt.String(v) for k, v in props.items()})
+                    state["properties"] = nbt.Compound({k: nbt.String(v) for k, v in props.items()})
                 palette.append(state)
 
         # Stream NBT records rather than allocating a second giant Python NBT object tree.

@@ -1,6 +1,6 @@
 # Minecraft Structure Lab
 
-A NeoForge 26.2 mod and local MCP server for generating NBT structures, placing each revision into a dedicated superflat world, and returning labeled screenshots rendered by Minecraft.
+A NeoForge 26.3 mod and local MCP server for generating NBT structures, placing each revision into a dedicated superflat world, and returning labeled screenshots rendered by Minecraft. The [26.2](https://github.com/julian-perge/MinecraftStructureInjector/tree/26.2), [26.1.2](https://github.com/julian-perge/MinecraftStructureInjector/tree/26.1.2) and [1.21.1](https://github.com/julian-perge/MinecraftStructureInjector/tree/1.21.1) versions live on their own branches.
 
 Browse the [build galleries](gallery/README.md), starting with the [Nebraska State Capitol](gallery/nebraska-capitol/README.md): three iterations, 16 final views, and an unmodded Minecraft check.
 
@@ -13,7 +13,7 @@ Download the JAR and MCP wheel from the [latest release](https://github.com/ewit
 - **[Install the Minecraft mod](docs/INSTALL_MOD.md)** — Modrinth setup, supported versions, and creating the Structure Lab world.
 - **[Install the MCP server](docs/INSTALL_MCP.md)** — Python setup, Codex registration, generic MCP configuration, and a first capture.
 
-The tested setup is Windows, Minecraft Java **26.2**, and NeoForge **26.2.0.79**. This release requires NeoForge **26.2.0.77 or newer within Minecraft 26.2**, Java 25 for Minecraft, and Python 3.15+ for MCP. Minecraft and MCP run on the same machine. The JAR alone does not install the MCP server.
+The tested setup for this version is a NeoForge **26.3.0.101** dev client on macOS. Windows and the Modrinth install in the guides above have not been tested on 26.3, and the latest release is still the 26.2 build, so build the 26.3 JAR from source. This version requires NeoForge **26.3.0.101 or newer within Minecraft 26.3**, Java 25 for Minecraft, and Python 3.15+ for MCP. Minecraft and MCP run on the same machine. The JAR alone does not install the MCP server.
 
 ![Nebraska State Capitol captured automatically in Minecraft](docs/images/capitol-aerial.jpg)
 
@@ -35,7 +35,7 @@ The mod exposes a local HTTP bridge; the external Python process exposes MCP ove
 | `job_status` / `cancel_job` | Poll or cancel a specific revision. |
 | `list_captures` / `get_capture` | List labels and return individual MCP image content. |
 | `inspect_blocks` | Read authoritative placed block states. |
-| `export_structure` | Copy the clean NBT and package a vanilla 26.2 datapack ZIP. |
+| `export_structure` | Copy the clean NBT and package a vanilla 26.3 datapack ZIP. |
 
 Example calls, using absolute paths:
 
@@ -89,7 +89,7 @@ Views may be a sidecar JSON list, or embedded `structurelab:view_pad` blocks. `S
 
 Minecraft yaw 0 faces +Z, yaw -90 faces +X; positive pitch looks down. FOV defaults to 70 and must be 30–110. Eye height defaults to 1.62 and must be 0–4. Optional `render_distance` is an integer from 4 to 24 chunks on a view; a batch temporarily raises the client distance to the largest requested value and restores the previous setting afterward. IDs must use letters, digits, underscores or hyphens, at most 64 characters. Angle IDs are unique within their view.
 
-For direct NBT authoring, a pad stores the JSON object as the string `nbt.view.json`. If the JSON omits `position`, the camera uses the block center in X/Z and its Y coordinate as feet height. Optional `nbt.view.replacement` is a vanilla palette-style compound with `Name` and optional `Properties`. The default replacement is air. Pad metadata is extracted before placement; pad block entities and unused pad palette entries are stripped from the export. A pad replacement does not preserve a separate block entity.
+For direct NBT authoring, a pad stores the JSON object as the string `nbt.view.json`. If the JSON omits `position`, the camera uses the block center in X/Z and its Y coordinate as feet height. Optional `nbt.view.replacement` is a vanilla palette-style compound with `id` and optional `properties`. The default replacement is air. Pad metadata is extracted before placement; pad block entities and unused pad palette entries are stripped from the export. A pad replacement does not preserve a separate block entity.
 
 Mark one view `spawn: true`. Its first angle is captured first and the player returns there after the batch. With no views, an exterior view is generated. With views but no spawn flag, the first view is the return point. An in-game pad configuration screen is not part of this milestone.
 
@@ -134,11 +134,11 @@ Copy the ZIP into a target world's `datapacks` folder, run `/reload`, then:
 /place template lab_export:house 0 -60 0
 ```
 
-Namespace and name can be changed in the export call. The exported format targets Minecraft Java 26.2, DataVersion 4903, datapack format 107.1.
+Namespace and name can be changed in the export call. The exported format targets Minecraft Java 26.3, DataVersion 5023, datapack format 121.0.
 
 ## Build and install elsewhere
 
-Java 25, Python 3.15+ and [uv](https://docs.astral.sh/uv/) are required. This project compiles against NeoForge 26.2.0.77; the actual Modrinth run was on 26.2.0.79.
+Java 25, Python 3.15+ and [uv](https://docs.astral.sh/uv/) are required. This project compiles against NeoForge 26.3.0.101.
 
 ```powershell
 .\gradlew.bat build --console=plain
@@ -146,9 +146,9 @@ uv sync
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-In a stopped Modrinth NeoForge 26.2 instance, select **Content → Upload files** and choose `build/libs/structurelab-26.2-0.2.0.jar` (not the sources JAR), then launch it and create a Structure Lab world.
+In a stopped Modrinth NeoForge 26.3 instance, select **Content → Upload files** and choose `build/libs/structurelab-26.3-0.2.0.jar` (not the sources JAR), then launch it and create a Structure Lab world.
 
-See [MCP installation](docs/INSTALL_MCP.md) for release-wheel installation, source installation, and client registration. Set `STRUCTURELAB_CONNECTION` to the absolute connection-file path when running the integration scripts against an instance other than the default Modrinth `NeoForge 26.2` profile.
+See [MCP installation](docs/INSTALL_MCP.md) for release-wheel installation, source installation, and client registration. Set `STRUCTURELAB_CONNECTION` to the absolute connection-file path when running the integration scripts against an instance other than the default Modrinth `NeoForge 26.3` profile.
 
 ## Verification
 

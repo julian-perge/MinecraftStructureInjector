@@ -19,7 +19,7 @@ from .builder import Structure
 from .example import house
 
 mcp = FastMCP("Minecraft Structure Lab")
-DEFAULT_INSTANCE = Path(os.environ.get("APPDATA", "~")) / "ModrinthApp/profiles/NeoForge 26.2"
+DEFAULT_INSTANCE = Path(os.environ.get("APPDATA", "~")) / "ModrinthApp/profiles/NeoForge 26.3"
 connection_path = Path(
     os.environ.get("STRUCTURELAB_CONNECTION", str(DEFAULT_INSTANCE / "structurelab/connection.json"))
 )
@@ -183,7 +183,7 @@ def generate_example_house(output_path: str, revision: int = 1) -> dict:
 
 @mcp.tool()
 def export_structure(revision: str, output_path: str, namespace: str = "lab_export", name: str = "house") -> dict:
-    """Export a verified revision as clean NBT plus a vanilla 26.2 datapack ZIP. No lab blocks survive."""
+    """Export a verified revision as clean NBT plus a vanilla 26.3 datapack ZIP. No lab blocks survive."""
     job = require_revision(revision)
     if job["state"] != "complete":
         raise ValueError("Only fully captured revisions can be exported")
@@ -191,7 +191,7 @@ def export_structure(revision: str, output_path: str, namespace: str = "lab_expo
         raise ValueError("Use lowercase letters, digits, and underscores for namespace/name")
     source = Path(job["directory"]) / "structure.nbt"
     data = nbtlib.load(source)
-    dependencies = sorted({str(s["Name"]).split(":")[0] for s in data["palette"]} - {"minecraft"})
+    dependencies = sorted({str(s["id"]).split(":")[0] for s in data["palette"]} - {"minecraft"})
     if "structurelab" in dependencies:
         raise ValueError("Export contains Structure Lab blocks")
     output = Path(output_path).resolve()
@@ -204,9 +204,9 @@ def export_structure(revision: str, output_path: str, namespace: str = "lab_expo
             json.dumps(
                 {
                     "pack": {
-                        "description": "Structure Lab clean export for Minecraft 26.2",
-                        "min_format": [107, 1],
-                        "max_format": [107, 1],
+                        "description": "Structure Lab clean export for Minecraft 26.3",
+                        "min_format": [121, 0],
+                        "max_format": [121, 0],
                     }
                 }
             ),

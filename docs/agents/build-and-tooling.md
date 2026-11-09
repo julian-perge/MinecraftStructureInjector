@@ -29,7 +29,7 @@ Each older version takes only fixes. A fix lands on the branch where it was test
 
 1. Land the work the old version still needs on `main`.
 2. Cut `port-<new version>` from `main` and port in slices, checking each slice in a dev client.
-3. Take the NeoForge and Jade targets from the NeoForge primers and changelog for every version crossed, and update every file in the table above.
+3. Take the NeoForge and Jade targets from the NeoForge primers and changelog for every version crossed, and update every file in the table above. Also read the data fixes added since the old version in `DataFixers`, because `LabPlacement` loads templates without vanilla's data fixer, so a renamed NBT key places air with no error.
 4. When the port runs, cut `<old version>` from `main` and push it. The "Version branches" ruleset (pattern `refs/heads/[0-9]*.*`) blocks deleting and force-pushing it from the first push, and `gh api repos/julian-perge/MinecraftStructureInjector/rules/branches/<old version> --jq '[.[].type]'` lists `deletion` and `non_fast_forward` when it applies. Then fast-forward `main` to the port branch, so history stays linear. If the ruleset is ever missing, this recreates it:
 
    ```

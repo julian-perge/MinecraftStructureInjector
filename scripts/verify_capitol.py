@@ -18,7 +18,7 @@ async def main():
     data = nbtlib.load(template)
     assert list(map(int, data["size"])) == [185, 130, 185]
     assert len(data["blocks"]) == 429341 and not data["entities"]
-    assert all(str(p["Name"]).startswith("minecraft:") for p in data["palette"])
+    assert all(str(p["id"]).startswith("minecraft:") for p in data["palette"])
     with zipfile.ZipFile(template.with_suffix(".zip")) as pack:
         assert pack.read("data/nebraska/structure/state_capitol.nbt") == template.read_bytes()
     records = {tuple(map(int, b["pos"])): data["palette"][int(b["state"])] for b in data["blocks"]}
@@ -56,8 +56,8 @@ async def main():
             for key, state in actual.items():
                 pos = tuple(json.loads(key))
                 expected = records[pos]
-                assert "{" + str(expected["Name"]) + "}" in state, (pos, state, expected)
-                for k, v in expected.get("Properties", {}).items():
+                assert "{" + str(expected["id"]) + "}" in state, (pos, state, expected)
+                for k, v in expected.get("properties", {}).items():
                     assert f"{k}={v}" in state, (pos, k, v, state)
         previous = json.loads((folder / "placement-manifest.json").read_text())
         assert previous["sha256"] == job["sha256"] and previous["processed"] == 288
@@ -72,7 +72,7 @@ async def main():
         "previous_runtime_revision_removed": True,
         "final_revision": job["revision"],
         "nbt_sha256": hashlib.sha256(template.read_bytes()).hexdigest(),
-        "jar_sha256": hashlib.sha256(Path("build/libs/structurelab-26.2-0.2.0.jar").read_bytes()).hexdigest(),
+        "jar_sha256": hashlib.sha256(Path("build/libs/structurelab-26.3-0.2.0.jar").read_bytes()).hexdigest(),
     }
     (folder / "verification.json").write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))
