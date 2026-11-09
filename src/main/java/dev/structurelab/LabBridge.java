@@ -42,7 +42,8 @@ public final class LabBridge {
     }
     public static void start() {
         try {
-            root=Minecraft.getInstance().gameDirectory.toPath().resolve("structurelab"); Files.createDirectories(root);
+            // A dev client's game directory is the relative path ".", and the MCP server runs from another folder, so the bridge reports absolute paths that both processes can open.
+            root=Minecraft.getInstance().gameDirectory.toPath().toAbsolutePath().normalize().resolve("structurelab"); Files.createDirectories(root);
             String token=UUID.randomUUID().toString()+UUID.randomUUID();
             HttpServer http=HttpServer.create(new InetSocketAddress(InetAddress.getByName("127.0.0.1"),0),0);
             http.setExecutor(Executors.newFixedThreadPool(2,r->{Thread t=new Thread(r,"Structure Lab HTTP");t.setDaemon(true);return t;}));
