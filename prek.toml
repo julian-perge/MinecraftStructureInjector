@@ -1,0 +1,28 @@
+#:schema https://www.schemastore.org/prek.json
+minimum_prek_version = "0.5.0"
+
+[[repos]]
+repo = "builtin"
+hooks = [
+    { id = "check-added-large-files" },
+    { id = "check-case-conflict" },
+    { id = "check-executables-have-shebangs" },
+    { id = "check-illegal-windows-names" },
+    { id = "check-merge-conflict" },
+    { id = "check-shebang-scripts-are-executable" },
+    { id = "check-toml" },
+    { id = "check-yaml" },
+    { id = "detect-private-key" },
+    { id = "end-of-file-fixer" },
+    { id = "fix-byte-order-marker" },
+    { id = "mixed-line-ending" },
+    { id = "trailing-whitespace" },
+]
+
+[[repos]]
+repo = "https://github.com/astral-sh/ruff-pre-commit"
+rev = "v0.17.4"
+hooks = [
+    { id = "ruff-check", args = ["--fix"] },
+    { id = "ruff-format" },
+]
