@@ -4,7 +4,7 @@ plugins {
 }
 version = '0.2.0'
 group = 'dev.structurelab'
-base { archivesName = 'structurelab-26.2' }
+base { archivesName = 'structurelab-26.1.2' }
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 java.withSourcesJar()
 repositories {
