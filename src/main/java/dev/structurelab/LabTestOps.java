@@ -3,6 +3,7 @@ package dev.structurelab;
 import com.google.gson.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.client.gui.screens.LoadingOverlay;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.core.BlockPos;
@@ -22,15 +23,18 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets;
 import java.util.*;
 import java.util.concurrent.*;
 
-/** Operations for testing other mods in any world: commands, camera aim, Jade text, guide screens, screenshots and chunk state. */
+/** Operations for testing other mods in any world: commands, camera aim, Jade text, guide screens, screenshots, resource reloads and chunk state. */
 public final class LabTestOps {
     static boolean handles(String op){
-        return switch(op){case "client","new_world","command","aim","jade_tooltip","guide","close_screen","screenshot","chunk_loaded","quit"->true;default->false;};
+        return switch(op){case "client","new_world","command","aim","jade_tooltip","guide","close_screen","screenshot","reload","chunk_loaded","quit"->true;default->false;};
     }
     static JsonObject rpc(String op,JsonObject request)throws Exception {
         return switch(op){
             case "client"->onClient(LabTestOps::client);
-            case "new_world"->onClient(()->newWorld(request.get("name").getAsString()));
+            case "new_world"->{
+                OptionalLong seed=request.has("seed")?OptionalLong.of(seed(request.get("seed"))):OptionalLong.empty();
+                yield onClient(()->newWorld(request.get("name").getAsString(),seed));
+            }
             case "command"->LabBridge.onServer(()->command(request.get("command").getAsString()));
             case "aim"->aim(request.getAsJsonArray("from"),request.getAsJsonArray("at"));
             case "jade_tooltip"->{
@@ -40,6 +44,7 @@ public final class LabTestOps {
             case "guide"->onClient(()->guide(request));
             case "close_screen"->onClient(()->{Minecraft.getInstance().setScreen(null);return new JsonObject();});
             case "screenshot"->screenshot(request.get("name").getAsString());
+            case "reload"->reload();
             case "chunk_loaded"->LabBridge.onServer(()->chunkLoaded(request));
             case "quit"->{Minecraft.getInstance().execute(Minecraft.getInstance()::stop);yield new JsonObject();}
             default->throw new IllegalArgumentException("Unknown operation: "+op);
@@ -61,15 +66,21 @@ public final class LabTestOps {
         }
         return out;
     }
-    // A creative world with cheats on, made the way the world list's debug button makes one, so the game opens it without any screen in between.
-    static JsonObject newWorld(String name)throws Exception {
+    // A creative world with cheats on, made the way the world list's debug button makes one, so the game opens it without any screen in between. A request without a seed gets a random one, and the response reports the seed that was used.
+    static JsonObject newWorld(String name,OptionalLong seed)throws Exception {
         Minecraft mc=Minecraft.getInstance();
         if(mc.level!=null)throw new IllegalStateException("Leave the current world before creating one");
         String folder=FileUtil.findAvailableName(mc.getLevelSource().getBaseDir(),name,"");
         LevelSettings settings=new LevelSettings(name,GameType.CREATIVE,LevelSettings.DifficultySettings.DEFAULT,true,WorldDataConfiguration.DEFAULT);
+        WorldOptions options=WorldOptions.defaultWithRandomSeed().withSeed(seed);
         mc.options.pauseOnLostFocus=false;
-        mc.createWorldOpenFlows().createFreshLevel(folder,settings,WorldOptions.defaultWithRandomSeed(),WorldPresets::createNormalWorldDimensions,mc.screen);
-        JsonObject out=new JsonObject();out.addProperty("folder",folder);return out;
+        mc.createWorldOpenFlows().createFreshLevel(folder,settings,options,WorldPresets::createNormalWorldDimensions,mc.screen);
+        JsonObject out=new JsonObject();out.addProperty("folder",folder);out.addProperty("seed",options.seed());return out;
+    }
+    // Gson's getAsLong would cut the fraction off a seed like 1.5 and wrap one beyond the range of a long, and either would quietly give a different world.
+    static long seed(JsonElement value){
+        try{return value.getAsBigDecimal().longValueExact();}
+        catch(ArithmeticException|NumberFormatException|UnsupportedOperationException e){throw new IllegalArgumentException("A seed must be a whole number that fits in a Java long");}
     }
     static ServerPlayer player(MinecraftServer server){
         List<ServerPlayer> players=server.getPlayerList().getPlayers();
@@ -120,6 +131,17 @@ public final class LabTestOps {
         JsonObject out=new JsonObject();out.addProperty("message",done.get(30,TimeUnit.SECONDS));
         out.addProperty("path",mc.gameDirectory.toPath().resolve("screenshots").resolve(name+".png").toString());
         return out;
+    }
+    // The same reload as F3+T, without its chat line. It returns once the loading overlay has faded out and closed, about two seconds after the reload itself, so the next screenshot shows the game and not the overlay.
+    // Minecraft never completes the future of a failed reload, so the bridge cannot tell a failed reload from a slow one and reports both as the timeout.
+    static JsonObject reload()throws Exception {
+        Minecraft mc=Minecraft.getInstance();long started=System.nanoTime(),deadline=started+TimeUnit.SECONDS.toNanos(90);
+        CompletableFuture<Void> done=onClient(mc::reloadResourcePacks);
+        while(!done.isDone()||onClient(()->mc.getOverlay() instanceof LoadingOverlay)){
+            if(System.nanoTime()>deadline)throw new TimeoutException(done.isDone()?"The loading overlay did not close within 90 seconds":"The resource reload did not finish within 90 seconds. A failed reload never finishes, so look for a resource pack error in the game log");
+            Thread.sleep(50);
+        }
+        JsonObject out=new JsonObject();out.addProperty("ok",true);out.addProperty("elapsed_ms",TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-started));return out;
     }
     static JsonObject chunkLoaded(JsonObject request){
         MinecraftServer server=LabSession.server;JsonArray p=request.getAsJsonArray("position");
