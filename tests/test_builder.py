@@ -1,4 +1,6 @@
 import json
+from pathlib import Path
+
 import nbtlib
 import pytest
 from structurelab import Structure
@@ -25,28 +27,39 @@ def test_view_angles_use_minecraft_coordinates():
 
 
 def test_example_contains_pad_and_cleanup_sentinel(tmp_path):
-    first=house(tmp_path/"first.nbt",1)
-    second=house(tmp_path/"second.nbt",2)
-    a,b=nbtlib.load(first["path"]),nbtlib.load(second["path"])
-    assert list(map(int,a["size"])) == [19,10,17]
-    assert list(map(int,b["size"])) == [17,10,17]
-    assert any(str(p["Name"])=="structurelab:view_pad" for p in a["palette"])
-    assert any(str(p["Name"])=="minecraft:gold_block" for p in a["palette"])
-    assert not any(str(p["Name"])=="minecraft:gold_block" for p in b["palette"])
-    assert len(json.loads(open(first["views_path"]).read())) == 3
+    first = house(tmp_path / "first.nbt", 1)
+    second = house(tmp_path / "second.nbt", 2)
+    a, b = nbtlib.load(first["path"]), nbtlib.load(second["path"])
+    assert list(map(int, a["size"])) == [19, 10, 17]
+    assert list(map(int, b["size"])) == [17, 10, 17]
+    assert any(str(p["Name"]) == "structurelab:view_pad" for p in a["palette"])
+    assert any(str(p["Name"]) == "minecraft:gold_block" for p in a["palette"])
+    assert not any(str(p["Name"]) == "minecraft:gold_block" for p in b["palette"])
+    assert len(json.loads(Path(first["views_path"]).read_text(encoding="utf-8"))) == 3
 
 
 def test_out_of_bounds_is_rejected():
-    with pytest.raises(ValueError):
-        Structure((3,3,3)).set((3,1,1), "stone")
+    with pytest.raises(ValueError, match="is outside"):
+        Structure((3, 3, 3)).set((3, 1, 1), "stone")
 
 
 def test_streamed_export_preserves_typed_block_entity_and_is_deterministic(tmp_path):
-    entity=nbtlib.Compound({"id":nbtlib.String("minecraft:chest"),"Items":nbtlib.List[nbtlib.Compound]([
-        nbtlib.Compound({"Slot":nbtlib.Byte(0),"id":nbtlib.String("minecraft:diamond"),"count":nbtlib.Int(3)})])})
-    s=Structure((80,40,80)).set((79,39,79),"chest",{"facing":"west"},entity)
-    s.save(tmp_path/"one.nbt");s.save(tmp_path/"two.nbt")
-    assert (tmp_path/"one.nbt").read_bytes()==(tmp_path/"two.nbt").read_bytes()
-    result=nbtlib.load(tmp_path/"one.nbt")
-    assert result["blocks"][0]["nbt"]==entity
-    assert list(result["blocks"][0]["pos"])==[79,39,79]
+    entity = nbtlib.Compound(
+        {
+            "id": nbtlib.String("minecraft:chest"),
+            "Items": nbtlib.List[nbtlib.Compound](
+                [
+                    nbtlib.Compound(
+                        {"Slot": nbtlib.Byte(0), "id": nbtlib.String("minecraft:diamond"), "count": nbtlib.Int(3)}
+                    )
+                ]
+            ),
+        }
+    )
+    s = Structure((80, 40, 80)).set((79, 39, 79), "chest", {"facing": "west"}, entity)
+    s.save(tmp_path / "one.nbt")
+    s.save(tmp_path / "two.nbt")
+    assert (tmp_path / "one.nbt").read_bytes() == (tmp_path / "two.nbt").read_bytes()
+    result = nbtlib.load(tmp_path / "one.nbt")
+    assert result["blocks"][0]["nbt"] == entity
+    assert list(result["blocks"][0]["pos"]) == [79, 39, 79]
