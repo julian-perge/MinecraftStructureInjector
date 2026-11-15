@@ -72,6 +72,8 @@ public final class LabTestOps {
     static JsonObject newWorld(String name,OptionalLong seed)throws Exception {
         Minecraft mc=Minecraft.getInstance();
         if(mc.level!=null)throw new IllegalStateException("Leave the current world before creating one");
+        // The bridge already answers while the game loads, and a world created under the loading overlay can hang the client.
+        if(mc.getOverlay()!=null)throw new IllegalStateException("The game is still loading. Send new_world again after the loading screen has closed");
         String folder=FileUtil.findAvailableName(mc.getLevelSource().getBaseDir(),name,"");
         LevelSettings settings=new LevelSettings(name,GameType.CREATIVE,false,Difficulty.NORMAL,true,new GameRules(),WorldDataConfiguration.DEFAULT);
         WorldOptions options=WorldOptions.defaultWithRandomSeed().withSeed(seed);
