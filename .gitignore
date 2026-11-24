@@ -16,3 +16,4 @@ dist/
 *.iml
 .DS_Store
 .recall/
+tasks/
